@@ -208,6 +208,7 @@ export default {
   'Mark cards in this list as complete': 'Mark cards in this list as complete',
   'Add list': 'Add list',
   'Add a list': 'Add a list',
+  'Add a unit': 'Add a unit',
 
   // components/Lane/LaneHeader.tsx
   'Move list': 'Move list',

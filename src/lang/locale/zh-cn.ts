@@ -183,6 +183,7 @@ export default {
   'Mark cards in this list as complete': '将该列设置为完成列',
   'Add list': '添加',
   'Add a list': '添加列',
+  'Add a unit': '添加单元',
 
   // components/Lane/LaneHeader.tsx
   'Move list': '移动列',

@@ -27,6 +27,7 @@ export const kanbanIcon = 'lucide-trello';
 
 interface ViewEvents {
   showLaneForm: () => void;
+  showUnitForm: () => void;
   hotkey: (commandId: string) => void;
 }
 
@@ -330,9 +331,7 @@ export class KanbanView extends TextFileView implements HoverParent {
       const btn = this.addAction('lucide-plus-circle', t('Add a list'), () => {
         this.emitter.emit('showLaneForm', undefined);
       });
-
       btn.addClass(c('ignore-click-outside'));
-
       this.actionButtons['show-add-list'] = btn;
     } else if (
       !stateManager.getSetting('show-add-list') &&
@@ -340,6 +339,22 @@ export class KanbanView extends TextFileView implements HoverParent {
     ) {
       this.actionButtons['show-add-list'].remove();
       delete this.actionButtons['show-add-list'];
+    }
+    if (
+        stateManager.getSetting('show-add-unit') &&
+        !this.actionButtons['show-add-unit']
+    ) {
+      const btn2 = this.addAction('lucide-plus-square', t('Add a unit'), () => {
+        this.emitter.emit('showUnitForm', undefined);
+      });
+      btn2.addClass(c('ignore-click-outside'));
+      this.actionButtons['show-add-unit'] = btn2;
+    } else if (
+        !stateManager.getSetting('show-add-unit') &&
+        this.actionButtons['show-add-unit']
+    ) {
+      this.actionButtons['show-add-unit'].remove();
+      delete this.actionButtons['show-add-unit'];
     }
   }
 

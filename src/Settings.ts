@@ -82,6 +82,7 @@ export interface KanbanSettings {
   'time-trigger'?: string;
 
   'show-add-list'?: boolean;
+  'show-add-unit'?: boolean;
   'show-archive-all'?: boolean;
   'show-view-as-markdown'?: boolean;
   'show-board-settings'?: boolean;
@@ -120,6 +121,7 @@ export const settingKeyLookup: Record<keyof KanbanSettings, true> = {
   'time-format': true,
   'time-trigger': true,
   'show-add-list': true,
+  'show-add-unit': true,
   'show-archive-all': true,
   'show-view-as-markdown': true,
   'show-board-settings': true,
@@ -583,6 +585,7 @@ export class SettingsManager {
         this.cleanupFns.push(() => {
           if (setting.settingEl) {
             cleanUpTagSettings(setting.settingEl);
+
           }
         });
       });
@@ -628,7 +631,45 @@ export class SettingsManager {
             });
         });
     });
+      new Setting(contentEl).setName(t('Add a unit')).then((setting) => {
+          let toggleComponent: ToggleComponent;
 
+          setting
+              .addToggle((toggle) => {
+                  toggleComponent = toggle;
+
+                  const [value, globalValue] = this.getSetting('show-add-unit', local);
+
+                  if (value !== undefined && value !== null) {
+                      toggle.setValue(value as boolean);
+                  } else if (globalValue !== undefined && globalValue !== null) {
+                      toggle.setValue(globalValue as boolean);
+                  } else {
+                      // default
+                      toggle.setValue(true);
+                  }
+
+                  toggle.onChange((newValue) => {
+                      this.applySettingsUpdate({
+                          'show-add-unit': {
+                              $set: newValue,
+                          },
+                      });
+                  });
+              })
+              .addExtraButton((b) => {
+                  b.setIcon('lucide-rotate-ccw')
+                      .setTooltip(t('Reset to default'))
+                      .onClick(() => {
+                          const [, globalValue] = this.getSetting('show-add-unit', local);
+                          toggleComponent.setValue(!!globalValue);
+
+                          this.applySettingsUpdate({
+                              $unset: ['show-add-unit'],
+                          });
+                      });
+              });
+      });
     new Setting(contentEl)
       .setName(t('Archive completed cards'))
       .then((setting) => {

@@ -26,6 +26,7 @@ import { baseClassName, c, getDateColorFn, getTagColorFn } from './helpers';
 import { Icon } from './Icon/Icon';
 import { Lanes } from './Lane/Lane';
 import { LaneForm } from './Lane/LaneForm';
+import { UnitForm } from './Lane/UnitForm';
 import { DataTypes } from './types';
 
 const boardScrollTiggers = [DataTypes.Item, DataTypes.Lane];
@@ -50,6 +51,9 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
   const [isLaneFormVisible, setIsLaneFormVisible] = Preact.useState<boolean>(
     boardData?.children.length === 0
   );
+  const [isUnitFormVisible, setIsUnitFormVisible] = Preact.useState<boolean>(
+    boardData?.children.length === 0
+  );
 
   const filePath = stateManager.file.path;
   const maxArchiveLength = stateManager.useSetting('max-archive-size');
@@ -62,9 +66,21 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
     }
   }, [boardData?.children.length]);
 
+  const closeUnitForm = Preact.useCallback(() => {
+    if (boardData?.children.length > 0) {
+      setIsUnitFormVisible(false);
+    }
+  }, [boardData?.children.length]);
+
   Preact.useEffect(() => {
     if (boardData?.children.length === 0 && !stateManager.hasError()) {
       setIsLaneFormVisible(true);
+    }
+  }, [boardData?.children.length, stateManager]);
+
+  Preact.useEffect(() => {
+    if (boardData?.children.length === 0 && !stateManager.hasError()) {
+      setIsUnitFormVisible(true);
     }
   }, [boardData?.children.length, stateManager]);
 
@@ -84,7 +100,22 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
       }
     });
   }, []);
+  const onNewUnit = Preact.useCallback(() => {
+    rootRef.current?.win.setTimeout(() => {
+      const board = rootRef.current?.getElementsByClassName(c('board'));
 
+      if (board?.length) {
+        animateScrollTo([board[0].scrollWidth, 0], {
+          elementToScroll: board[0],
+          speed: 300,
+          minDuration: 150,
+          easing: (x: number) => {
+            return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
+          },
+        });
+      }
+    });
+  }, []);
   Preact.useEffect(() => {
     const onSearchHotkey = (e: string) => {
       if (e === 'editor:open-search') {
@@ -95,13 +126,18 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
     const showLaneForm = () => {
       setIsLaneFormVisible(true);
     };
+    const showUnitForm = () => {
+      setIsUnitFormVisible(true);
+    };
 
     view.emitter.on('hotkey', onSearchHotkey);
     view.emitter.on('showLaneForm', showLaneForm);
+    view.emitter.on('showUnitForm', showUnitForm);
 
     return () => {
       view.emitter.off('hotkey', onSearchHotkey);
       view.emitter.off('showLaneForm', showLaneForm);
+      view.emitter.off('showUnitForm', showUnitForm);
     };
   }, [view]);
 
@@ -323,6 +359,9 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
           >
             {(isLaneFormVisible || boardData.children.length === 0) && (
               <LaneForm onNewLane={onNewLane} closeLaneForm={closeLaneForm} />
+            )}
+            {(isUnitFormVisible || boardData.children.length === 0) && (
+              <UnitForm onNewUnit={onNewUnit} closeUnitForm={closeUnitForm} />
             )}
             {isSearching && (
               <div className={c('search-wrapper')}>
