@@ -290,7 +290,7 @@ export class StateManager {
       'show-add-list':
         this.getSettingRaw('show-add-list', suppliedSettings) ?? true,
       'show-add-unit':
-          this.getSettingRaw('show-add-unit', suppliedSettings) ?? true,
+        this.getSettingRaw('show-add-unit', suppliedSettings) ?? true,
       'show-archive-all':
         this.getSettingRaw('show-archive-all', suppliedSettings) ?? true,
       'show-view-as-markdown':

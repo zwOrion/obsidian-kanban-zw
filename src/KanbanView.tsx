@@ -195,7 +195,6 @@ export class KanbanView extends TextFileView implements HoverParent {
     ).open();
   }
 
-
   onPaneMenu(menu: Menu, source: string, callSuper: boolean = true) {
     if (source !== 'more-options') {
       super.onPaneMenu(menu, source);
@@ -341,8 +340,8 @@ export class KanbanView extends TextFileView implements HoverParent {
       delete this.actionButtons['show-add-list'];
     }
     if (
-        stateManager.getSetting('show-add-unit') &&
-        !this.actionButtons['show-add-unit']
+      stateManager.getSetting('show-add-unit') &&
+      !this.actionButtons['show-add-unit']
     ) {
       const btn2 = this.addAction('lucide-plus-square', t('Add a unit'), () => {
         this.emitter.emit('showUnitForm', undefined);
@@ -350,8 +349,8 @@ export class KanbanView extends TextFileView implements HoverParent {
       btn2.addClass(c('ignore-click-outside'));
       this.actionButtons['show-add-unit'] = btn2;
     } else if (
-        !stateManager.getSetting('show-add-unit') &&
-        this.actionButtons['show-add-unit']
+      !stateManager.getSetting('show-add-unit') &&
+      this.actionButtons['show-add-unit']
     ) {
       this.actionButtons['show-add-unit'].remove();
       delete this.actionButtons['show-add-unit'];

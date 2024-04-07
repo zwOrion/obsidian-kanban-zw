@@ -51,9 +51,8 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
   const [isLaneFormVisible, setIsLaneFormVisible] = Preact.useState<boolean>(
     boardData?.children.length === 0
   );
-  const [isUnitFormVisible, setIsUnitFormVisible] = Preact.useState<boolean>(
-    boardData?.children.length === 0
-  );
+  const [isUnitFormVisible, setIsUnitFormVisible] =
+    Preact.useState<boolean>(false);
 
   const filePath = stateManager.file.path;
   const maxArchiveLength = stateManager.useSetting('max-archive-size');
@@ -80,7 +79,7 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
 
   Preact.useEffect(() => {
     if (boardData?.children.length === 0 && !stateManager.hasError()) {
-      setIsUnitFormVisible(true);
+      setIsUnitFormVisible(false);
     }
   }, [boardData?.children.length, stateManager]);
 
@@ -357,10 +356,11 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
             onAuxClick={onClick}
             {...html5DragHandlers}
           >
-            {(isLaneFormVisible || boardData.children.length === 0) && (
-              <LaneForm onNewLane={onNewLane} closeLaneForm={closeLaneForm} />
-            )}
-            {(isUnitFormVisible || boardData.children.length === 0) && (
+            {!isUnitFormVisible &&
+              (isLaneFormVisible || boardData.children.length === 0) && (
+                <LaneForm onNewLane={onNewLane} closeLaneForm={closeLaneForm} />
+              )}
+            {isUnitFormVisible && (
               <UnitForm onNewUnit={onNewUnit} closeUnitForm={closeUnitForm} />
             )}
             {isSearching && (

@@ -1,6 +1,6 @@
 import Preact from 'preact/compat';
 import useOnclickOutside from 'react-cool-onclickoutside';
-import * as Pinyin from 'jian-pinyin'
+import * as Pinyin from 'jian-pinyin';
 
 import { t } from 'src/lang/helpers';
 import { parseLaneTitle } from 'src/parsers/helpers/parser';
@@ -36,15 +36,22 @@ export function UnitForm({
   }, []);
 
   const createLane = async () => {
-
     const title = await stateManager.getNewItem(laneTitle);
     // 获取第一个字符，判断是否是中文
     const firstChar = laneTitle.slice(0, 1);
-    const firstCharSpell = Pinyin.getSpell(firstChar);
+    const firstCharSpell = Pinyin.getSpell(
+      firstChar,
+      function (character: string, spell: string) {
+        console.log(character, spell);
+        return spell[1];
+      },
+      ''
+    );
+    console.log(firstCharSpell);
     let splitElement = firstCharSpell.split(',')[0].slice(0, 1).toUpperCase();
     // 判断是否是A~Z
-    if (splitElement < 'A' && splitElement > 'Z') {
-      splitElement = '#';
+    if (splitElement < 'A' || splitElement > 'Z') {
+      splitElement = '#1';
     }
     boardModifiers.insertUnits({
       ...LaneTemplate,
@@ -83,7 +90,7 @@ export function UnitForm({
           value={laneTitle}
         />
       </div>
-     {/* <div className={c('checkbox-wrapper')}>
+      {/* <div className={c('checkbox-wrapper')}>
         <div className={c('checkbox-label')}>
           {t('Mark cards in this list as complete')}
         </div>

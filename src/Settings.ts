@@ -585,7 +585,6 @@ export class SettingsManager {
         this.cleanupFns.push(() => {
           if (setting.settingEl) {
             cleanUpTagSettings(setting.settingEl);
-
           }
         });
       });
@@ -631,45 +630,45 @@ export class SettingsManager {
             });
         });
     });
-      new Setting(contentEl).setName(t('Add a unit')).then((setting) => {
-          let toggleComponent: ToggleComponent;
+    new Setting(contentEl).setName(t('Add a unit')).then((setting) => {
+      let toggleComponent: ToggleComponent;
 
-          setting
-              .addToggle((toggle) => {
-                  toggleComponent = toggle;
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
 
-                  const [value, globalValue] = this.getSetting('show-add-unit', local);
+          const [value, globalValue] = this.getSetting('show-add-unit', local);
 
-                  if (value !== undefined && value !== null) {
-                      toggle.setValue(value as boolean);
-                  } else if (globalValue !== undefined && globalValue !== null) {
-                      toggle.setValue(globalValue as boolean);
-                  } else {
-                      // default
-                      toggle.setValue(true);
-                  }
+          if (value !== undefined && value !== null) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined && globalValue !== null) {
+            toggle.setValue(globalValue as boolean);
+          } else {
+            // default
+            toggle.setValue(false);
+          }
 
-                  toggle.onChange((newValue) => {
-                      this.applySettingsUpdate({
-                          'show-add-unit': {
-                              $set: newValue,
-                          },
-                      });
-                  });
-              })
-              .addExtraButton((b) => {
-                  b.setIcon('lucide-rotate-ccw')
-                      .setTooltip(t('Reset to default'))
-                      .onClick(() => {
-                          const [, globalValue] = this.getSetting('show-add-unit', local);
-                          toggleComponent.setValue(!!globalValue);
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'show-add-unit': {
+                $set: newValue,
+              },
+            });
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('show-add-unit', local);
+              toggleComponent.setValue(!!globalValue);
 
-                          this.applySettingsUpdate({
-                              $unset: ['show-add-unit'],
-                          });
-                      });
+              this.applySettingsUpdate({
+                $unset: ['show-add-unit'],
               });
-      });
+            });
+        });
+    });
     new Setting(contentEl)
       .setName(t('Archive completed cards'))
       .then((setting) => {

@@ -166,6 +166,5 @@ export function updateParentEntity(
 
 export function getDataFromStructure(root: Nestable): any {
   // 根据您的数据结构遍历嵌套结构并提取所需的数据
-
   // 返回您所需的数据
 }
