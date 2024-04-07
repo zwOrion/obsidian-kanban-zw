@@ -467,6 +467,7 @@ export default class KanbanPlugin extends Plugin {
       display: 'Kanban',
       defaultMod: true,
     });
+
   }
 
   registerCommands() {
@@ -558,6 +559,21 @@ export default class KanbanPlugin extends Plugin {
 
         if (view && view instanceof KanbanView) {
           view.emitter.emit('showLaneForm', undefined);
+        }
+      },
+    });
+    this.addCommand({
+      id: 'add-kanban-unit',
+      name: t('Add a unit'),
+      checkCallback: (checking) => {
+        const view = app.workspace.getActiveViewOfType(KanbanView);
+
+        if (checking) {
+          return view && view instanceof KanbanView;
+        }
+
+        if (view && view instanceof KanbanView) {
+          view.emitter.emit('showUnitForm', undefined);
         }
       },
     });
