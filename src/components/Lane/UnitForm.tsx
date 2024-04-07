@@ -34,7 +34,17 @@ export function UnitForm({
   Preact.useLayoutEffect(() => {
     inputRef.current?.focus();
   }, []);
-
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.altKey) {
+      inputRef.current?.focus();
+    }
+  };
+  Preact.useLayoutEffect(() => {
+    window.addEventListener('keydown', onKeyDown); // 添加全局事件
+    return () => {
+      window.removeEventListener('keydown', onKeyDown); // 销毁
+    };
+  });
   const createLane = async () => {
     const title = await stateManager.getNewItem(laneTitle);
     // 获取第一个字符，判断是否是中文
@@ -67,7 +77,10 @@ export function UnitForm({
     setShouldMarkAsComplete(false);
     onNewUnit();
   };
-
+  const textareaProps = {
+    autofocus: true,
+    // 其他textarea属性
+  };
   return (
     <div ref={clickOutsideRef} className={c('lane-form-wrapper')}>
       <div className={c('lane-input-wrapper')}>
@@ -88,6 +101,7 @@ export function UnitForm({
           }}
           onEscape={closeUnitForm}
           value={laneTitle}
+          {...textareaProps}
         />
       </div>
       {/* <div className={c('checkbox-wrapper')}>
