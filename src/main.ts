@@ -467,7 +467,6 @@ export default class KanbanPlugin extends Plugin {
       display: 'Kanban',
       defaultMod: true,
     });
-
   }
 
   registerCommands() {
