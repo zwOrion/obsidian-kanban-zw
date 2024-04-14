@@ -28,6 +28,7 @@ export const kanbanIcon = 'lucide-trello';
 interface ViewEvents {
   showLaneForm: () => void;
   showUnitForm: () => void;
+  jumpFindNext: () => void;
   hotkey: (commandId: string) => void;
 }
 

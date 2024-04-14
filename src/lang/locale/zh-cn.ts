@@ -214,4 +214,7 @@ export default {
 
   // components/Editor/MarkdownEditor.tsx
   Submit: '提交',
+
+  'Find Next': '查找下一个',
+  'Find Previous': '查找上一个',
 };

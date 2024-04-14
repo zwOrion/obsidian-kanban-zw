@@ -577,6 +577,21 @@ export default class KanbanPlugin extends Plugin {
       },
     });
     this.addCommand({
+      id: 'find-next',
+      name: t('Find Next'),
+      checkCallback: (checking) => {
+        const view = app.workspace.getActiveViewOfType(KanbanView);
+
+        if (checking) {
+          return view && view instanceof KanbanView;
+        }
+
+        if (view && view instanceof KanbanView) {
+          view.emitter.emit('jumpFindNext', undefined);
+        }
+      },
+    });
+    this.addCommand({
       id: 'open-board-settings',
       name: t('Open board settings'),
       checkCallback: (checking) => {

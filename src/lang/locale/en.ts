@@ -239,4 +239,7 @@ export default {
 
   // components/Editor/MarkdownEditor.tsx
   Submit: 'Submit',
+
+  'Find Next': 'Find Next',
+  'Find Previous': 'Find Previous',
 };
