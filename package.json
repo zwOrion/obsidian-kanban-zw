@@ -7,13 +7,14 @@
     "check-types": "tsc --noemit",
     "dev": "cross-env BUILD=dev obsidian-plugin dev src/main.ts",
     "build": "yarn release",
-    "release": "cross-env BUILD=production obsidian-plugin build src/main.ts",
+    "release": "cross-env BUILD=production obsidian-plugin build src/main.ts && npm run zip",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
     "sort-imports": "import-sort --write \"./src/**/*.{ts,tsx}\"",
     "prettier": "prettier --write \"./src/**/*.{ts,tsx}\"",
     "clean": "yarn prettier && yarn lint:fix",
-    "publish": "standard-version --tag-prefix= && git push --follow-tags"
+    "publish": "standard-version --tag-prefix= && git push --follow-tags",
+    "zip": "node distFileProcess.mjs"
   },
   "keywords": [],
   "author": "",
