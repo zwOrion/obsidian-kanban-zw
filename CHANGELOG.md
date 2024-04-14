@@ -1,4 +1,11 @@
 # Changelog
+## [1.6.0](https://github.com/zwOrion/obsidian-kanban-zw/compare/1.5.4...1.6.0) (2024-04-14)
+
+
+### Features | 新功能
+
+* 添加查询后通过命令快捷键将搜索结果显示到可视范围内 ([265d4d6](https://github.com/zwOrion/obsidian-kanban-zw/commit/265d4d68d06baa4f009dfb81dc76d8667b103ce8))
+
 ### [1.5.4](https://github.com/zwOrion/obsidian-kanban-zw/compare/1.5.3-0.1...1.5.4) (2024-04-14)
 
 
