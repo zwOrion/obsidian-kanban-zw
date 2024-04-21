@@ -343,6 +343,11 @@ export default class KanbanPlugin extends Plugin {
   registerEvents() {
     this.registerEvent(
       app.workspace.on('file-menu', (menu, file, source, leaf) => {
+        console.log(!Platform.isMobile ,
+            file instanceof TFile ,
+            leaf ,
+            source === 'more-options' ,
+            hasFrontmatterKey(file),source)
         // Add a menu item to the folder context menu to create a board
         if (file instanceof TFolder) {
           menu.addItem((item) => {
@@ -359,7 +364,7 @@ export default class KanbanPlugin extends Plugin {
           !Platform.isMobile &&
           file instanceof TFile &&
           leaf &&
-          source === 'sidebar-context-menu' &&
+          source === 'more-options' &&
           hasFrontmatterKey(file)
         ) {
           const views = this.getKanbanViews(
@@ -374,8 +379,8 @@ export default class KanbanPlugin extends Plugin {
               break;
             }
           }
-
           if (!haveKanbanView) {
+
             menu.addItem((item) => {
               item
                 .setTitle(t('Open as kanban board'))

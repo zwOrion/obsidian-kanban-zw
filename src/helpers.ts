@@ -1,4 +1,4 @@
-import { App, TFile } from 'obsidian';
+import {App, TAbstractFile, TFile} from 'obsidian';
 import {
   getDailyNoteSettings,
   getDateFromFile,
@@ -63,10 +63,10 @@ export function hasFrontmatterKeyRaw(data: string) {
   return true;
 }
 
-export function hasFrontmatterKey(file: TFile) {
+export function hasFrontmatterKey(file: TAbstractFile) {
   if (!file) return false;
 
-  const cache = app.metadataCache.getFileCache(file);
+  const cache = app.metadataCache.getFileCache(file as TFile);
 
   return !!cache?.frontmatter && !!cache?.frontmatter['kanban-plugin'];
 }
