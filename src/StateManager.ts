@@ -291,6 +291,14 @@ export class StateManager {
         this.getSettingRaw('show-add-list', suppliedSettings) ?? true,
       'show-add-unit':
         this.getSettingRaw('show-add-unit', suppliedSettings) ?? false,
+      'disable-create-new-file-from-link':
+        this.getSettingRaw(
+          'disable-create-new-file-from-link',
+          suppliedSettings
+        ) ?? false,
+      'show-markdown-like-by-alias':
+        this.getSettingRaw('show-markdown-like-by-alias', suppliedSettings) ??
+        false,
       'show-archive-all':
         this.getSettingRaw('show-archive-all', suppliedSettings) ?? true,
       'show-view-as-markdown':

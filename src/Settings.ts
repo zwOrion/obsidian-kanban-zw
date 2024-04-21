@@ -85,6 +85,8 @@ export interface KanbanSettings {
   'show-add-unit'?: boolean;
   'show-archive-all'?: boolean;
   'show-view-as-markdown'?: boolean;
+  'disable-create-new-file-from-link'?: boolean;
+  'show-markdown-like-by-alias'?: boolean;
   'show-board-settings'?: boolean;
   'show-search'?: boolean;
 
@@ -124,6 +126,8 @@ export const settingKeyLookup: Record<keyof KanbanSettings, true> = {
   'show-add-unit': true,
   'show-archive-all': true,
   'show-view-as-markdown': true,
+  'disable-create-new-file-from-link': true,
+  'show-markdown-like-by-alias': true,
   'show-board-settings': true,
   'show-search': true,
   'tag-colors': true,
@@ -630,6 +634,102 @@ export class SettingsManager {
             });
         });
     });
+    new Setting(contentEl)
+      .setName(t('disable create new file from link'))
+      .then((setting) => {
+        let toggleComponent: ToggleComponent;
+
+        setting
+          .addToggle((toggle) => {
+            toggleComponent = toggle;
+
+            const [value, globalValue] = this.getSetting(
+              'disable-create-new-file-from-link',
+              local
+            );
+
+            if (value !== undefined && value !== null) {
+              toggle.setValue(value as boolean);
+            } else if (globalValue !== undefined && globalValue !== null) {
+              toggle.setValue(globalValue as boolean);
+            } else {
+              // default
+              toggle.setValue(false);
+            }
+
+            toggle.onChange((newValue) => {
+              this.applySettingsUpdate({
+                'disable-create-new-file-from-link': {
+                  $set: newValue,
+                },
+              });
+            });
+          })
+          .addExtraButton((b) => {
+            b.setIcon('lucide-rotate-ccw')
+              .setTooltip(t('Reset to default'))
+              .onClick(() => {
+                const [, globalValue] = this.getSetting(
+                  'disable-create-new-file-from-link',
+                  local
+                );
+                toggleComponent.setValue(!!globalValue);
+
+                this.applySettingsUpdate({
+                  $unset: ['disable-create-new-file-from-link'],
+                });
+              });
+          });
+      });
+
+    new Setting(contentEl)
+      .setName(t('show markdown like by alias'))
+      .then((setting) => {
+        let toggleComponent: ToggleComponent;
+
+        setting
+          .addToggle((toggle) => {
+            toggleComponent = toggle;
+
+            const [value, globalValue] = this.getSetting(
+              'show-markdown-like-by-alias',
+              local
+            );
+
+            if (value !== undefined && value !== null) {
+              toggle.setValue(value as boolean);
+            } else if (globalValue !== undefined && globalValue !== null) {
+              toggle.setValue(globalValue as boolean);
+            } else {
+              // default
+              toggle.setValue(false);
+            }
+
+            toggle.onChange((newValue) => {
+              this.applySettingsUpdate({
+                'show-markdown-like-by-alias': {
+                  $set: newValue,
+                },
+              });
+            });
+          })
+          .addExtraButton((b) => {
+            b.setIcon('lucide-rotate-ccw')
+              .setTooltip(t('Reset to default'))
+              .onClick(() => {
+                const [, globalValue] = this.getSetting(
+                  'show-markdown-like-by-alias',
+                  local
+                );
+                toggleComponent.setValue(!!globalValue);
+
+                this.applySettingsUpdate({
+                  $unset: ['show-markdown-like-by-alias'],
+                });
+              });
+          });
+      });
+
     new Setting(contentEl).setName(t('Add a unit')).then((setting) => {
       let toggleComponent: ToggleComponent;
 
@@ -669,6 +769,7 @@ export class SettingsManager {
             });
         });
     });
+
     new Setting(contentEl)
       .setName(t('Archive completed cards'))
       .then((setting) => {

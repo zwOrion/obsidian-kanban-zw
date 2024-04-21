@@ -242,4 +242,6 @@ export default {
 
   'Find Next': 'Find Next',
   'Find Previous': 'Find Previous',
+  'disable create new file from link': 'disable create new file from link',
+  'show markdown like by alias': 'show markdown like by alias',
 };

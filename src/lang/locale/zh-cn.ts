@@ -217,4 +217,6 @@ export default {
 
   'Find Next': '查找下一个',
   'Find Previous': '查找上一个',
+  'disable create new file from link': '禁用从链接创建文件',
+  'show markdown like by alias': '显示别名链接的别名',
 };

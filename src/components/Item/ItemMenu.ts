@@ -1,4 +1,4 @@
-import { Menu, TFile, TFolder, getLinkpath } from 'obsidian';
+import { Menu, TFile, TFolder, getLinkpath, Notice } from 'obsidian';
 import Preact from 'preact/compat';
 
 import { Path } from 'src/dnd/types';
@@ -66,7 +66,15 @@ export function useItemMenu({
                   .replace(mdLinkRegEx, '$1')
                   .replace(illegalCharsRegEx, ' ')
                   .trim();
-
+                if (
+                  stateManager.getSetting('disable-create-new-file-from-link')
+                ) {
+                  const doubleLinkRegex = /\[\[(.*?)]]/g;
+                  if (doubleLinkRegex.test(item.data.title)) {
+                    new Notice(t('disable create new file from link'));
+                    return;
+                  }
+                }
                 const newNoteFolder =
                   stateManager.getSetting('new-note-folder');
                 const newNoteTemplatePath =
@@ -95,13 +103,25 @@ export function useItemMenu({
                   newNoteTemplatePath as string | undefined
                 );
 
-                const newTitleRaw = item.data.titleRaw.replace(
-                  prevTitle,
-                  stateManager.app.fileManager.generateMarkdownLink(
-                    newFile,
-                    stateManager.file.path
-                  )
-                );
+                const newTitleRaw = stateManager.getSetting(
+                  'show-markdown-like-by-alias'
+                )
+                  ? item.data.titleRaw.replace(
+                      prevTitle,
+                      stateManager.app.fileManager.generateMarkdownLink(
+                        newFile,
+                        stateManager.file.path,
+                        undefined,
+                        prevTitle
+                      )
+                    )
+                  : item.data.titleRaw.replace(
+                      prevTitle,
+                      stateManager.app.fileManager.generateMarkdownLink(
+                        newFile,
+                        stateManager.file.path
+                      )
+                    );
 
                 stateManager
                   .updateItemContent(item, newTitleRaw)
