@@ -93,7 +93,9 @@ export async function applyTemplate(
             ...activeView.getState(),
             mode: 'source',
           },
-          {}
+          {
+            history: true,
+          }
         );
       }
 

@@ -343,11 +343,14 @@ export default class KanbanPlugin extends Plugin {
   registerEvents() {
     this.registerEvent(
       app.workspace.on('file-menu', (menu, file, source, leaf) => {
-        console.log(!Platform.isMobile ,
-            file instanceof TFile ,
-            leaf ,
-            source === 'more-options' ,
-            hasFrontmatterKey(file),source)
+        console.log(
+          !Platform.isMobile,
+          file instanceof TFile,
+          leaf,
+          source === 'more-options',
+          hasFrontmatterKey(file, this.app),
+          source
+        );
         // Add a menu item to the folder context menu to create a board
         if (file instanceof TFolder) {
           menu.addItem((item) => {
@@ -365,7 +368,7 @@ export default class KanbanPlugin extends Plugin {
           file instanceof TFile &&
           leaf &&
           source === 'more-options' &&
-          hasFrontmatterKey(file)
+          hasFrontmatterKey(file, this.app)
         ) {
           const views = this.getKanbanViews(
             getParentWindow(leaf.view.containerEl)
@@ -380,7 +383,6 @@ export default class KanbanPlugin extends Plugin {
             }
           }
           if (!haveKanbanView) {
-
             menu.addItem((item) => {
               item
                 .setTitle(t('Open as kanban board'))
@@ -401,7 +403,7 @@ export default class KanbanPlugin extends Plugin {
           leaf?.view instanceof MarkdownView &&
           file instanceof TFile &&
           source === 'pane-more-options' &&
-          hasFrontmatterKey(file)
+          hasFrontmatterKey(file, this.app)
         ) {
           menu.addItem((item) => {
             item

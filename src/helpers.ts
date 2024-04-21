@@ -1,4 +1,4 @@
-import {App, TAbstractFile, TFile} from 'obsidian';
+import { App, TAbstractFile, TFile } from 'obsidian';
 import {
   getDailyNoteSettings,
   getDateFromFile,
@@ -63,7 +63,7 @@ export function hasFrontmatterKeyRaw(data: string) {
   return true;
 }
 
-export function hasFrontmatterKey(file: TAbstractFile) {
+export function hasFrontmatterKey(file: TAbstractFile, app: App) {
   if (!file) return false;
 
   const cache = app.metadataCache.getFileCache(file as TFile);

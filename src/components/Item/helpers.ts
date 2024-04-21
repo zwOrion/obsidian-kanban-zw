@@ -1,6 +1,5 @@
 import { FileWithPath, fromEvent } from 'file-selector';
 import {
-  MarkdownSourceView,
   Platform,
   TFile,
   TFolder,
@@ -366,16 +365,7 @@ export function getMarkdown(
   transfer: DataTransfer,
   html: string
 ) {
-  // 0.12.5 -- remove handleDataTransfer below when this version is more widely supported
-  if (htmlToMarkdown) {
-    return htmlToMarkdown(html);
-  }
-
-  // crude hack to use Obsidian's html-to-markdown converter (replace when Obsidian exposes it in API):
-  return (MarkdownSourceView.prototype as any).handleDataTransfer.call(
-    { app: stateManager.app },
-    transfer
-  ) as string;
+  return htmlToMarkdown(html);
 }
 
 export function fixLinks(text: string) {

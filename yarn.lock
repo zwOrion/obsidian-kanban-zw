@@ -190,18 +190,29 @@
     "@babel/helper-validator-identifier" "^7.18.6"
     "to-fast-properties" "^2.0.0"
 
-"@codemirror/state@^6.0.0":
-  "integrity" "sha512-6vYgaXc4KjSY0BUfSVDJooGcoswg/RJZpq/ZGjsUYmY0KN1lmB8u03nv+jiG1ncUV5qoggyxFT5AGD5Ak+5Zrw=="
-  "resolved" "https://registry.npmmirror.com/@codemirror/state/-/state-6.0.1.tgz"
-  "version" "6.0.1"
-
-"@codemirror/view@^6.0.0":
-  "integrity" "sha512-mnVT/q1JvKPjpmjXJNeCi/xHyaJ3abGJsumIVpdQ1nE1MXAyHf7GHWt8QpWMUvDiqF0j+inkhVR2OviTdFFX7Q=="
-  "resolved" "https://registry.npmmirror.com/@codemirror/view/-/view-6.0.2.tgz"
-  "version" "6.0.2"
+"@codemirror/language@git+https://github.com/lishid/cm-language.git":
+  "resolved" "git+ssh://git@github.com/lishid/cm-language.git#2644bfc27afda707a7e1f3aedaf3ca7120f63cd9"
+  "version" "6.10.1"
   dependencies:
     "@codemirror/state" "^6.0.0"
+    "@codemirror/view" "^6.23.0"
+    "@lezer/common" "^1.1.0"
+    "@lezer/highlight" "^1.0.0"
+    "@lezer/lr" "^1.0.0"
     "style-mod" "^4.0.0"
+
+"@codemirror/state@^6.0.0", "@codemirror/state@^6.0.1", "@codemirror/state@^6.4.0":
+  "integrity" "sha512-QkEyUiLhsJoZkbumGZlswmAhA7CBU02Wrz7zvH4SrcifbsqwlXShVXg65f3v/ts57W3dqyamEriMhij1Z3Zz4A=="
+  "resolved" "https://registry.npmmirror.com/@codemirror/state/-/state-6.4.1.tgz"
+  "version" "6.4.1"
+
+"@codemirror/view@^6.0.0", "@codemirror/view@^6.0.1", "@codemirror/view@^6.23.0":
+  "integrity" "sha512-gmqxkPALZjkgSxIeeweY/wGQXBfwTUaLs8h7OKtSwfbj9Ct3L11lD+u1sS7XHppxFQoMDiMDp07P9f3I2jWOHw=="
+  "resolved" "https://registry.npmmirror.com/@codemirror/view/-/view-6.26.3.tgz"
+  "version" "6.26.3"
+  dependencies:
+    "@codemirror/state" "^6.4.0"
+    "style-mod" "^4.1.0"
     "w3c-keyname" "^2.2.4"
 
 "@eslint/eslintrc@^1.3.0":
@@ -272,6 +283,25 @@
   dependencies:
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
+
+"@lezer/common@^1.0.0", "@lezer/common@^1.1.0":
+  "integrity" "sha512-yemX0ZD2xS/73llMZIK6KplkjIjf2EvAHcinDi/TfJ9hS25G0388+ClHt6/3but0oOxinTcQHJLDXh6w1crzFQ=="
+  "resolved" "https://registry.npmmirror.com/@lezer/common/-/common-1.2.1.tgz"
+  "version" "1.2.1"
+
+"@lezer/highlight@^1.0.0":
+  "integrity" "sha512-WrS5Mw51sGrpqjlh3d4/fOwpEV2Hd3YOkp9DBt4k8XZQcoTHZFB7sx030A6OcahF4J1nDQAa3jXlTVVYH50IFA=="
+  "resolved" "https://registry.npmmirror.com/@lezer/highlight/-/highlight-1.2.0.tgz"
+  "version" "1.2.0"
+  dependencies:
+    "@lezer/common" "^1.0.0"
+
+"@lezer/lr@^1.0.0":
+  "integrity" "sha512-Wst46p51km8gH0ZUmeNrtpRYmdlRHUpN1DQd3GFAyKANi8WVz8c2jHYTf1CVScFaCjQw1iO3ZZdqGDxQPRErTg=="
+  "resolved" "https://registry.npmmirror.com/@lezer/lr/-/lr-1.4.0.tgz"
+  "version" "1.4.0"
+  dependencies:
+    "@lezer/common" "^1.0.0"
 
 "@mrmlnc/readdir-enhanced@^2.2.1":
   "integrity" "sha512-bPHp6Ji8b41szTOcaP63VlnbbO5Ny6dwAATtY6JTjh5N2OLrb5Qk/Th5cRkRQhkWCt+EJsYrNB0MiL+Gpn6e3g=="
@@ -417,13 +447,6 @@
   "integrity" "sha512-Bf6O431pf1gDWxCXnKrxcBPc+NLpTA9HtZJ1l1hEhqrBsSr2zDwYrw2/K6QwkO+Nwfj5spsLwRFNYLft5QhVSQ=="
   "resolved" "https://registry.npmmirror.com/@types/box-intersect/-/box-intersect-1.0.0.tgz"
   "version" "1.0.0"
-
-"@types/codemirror@0.0.108":
-  "integrity" "sha512-3FGFcus0P7C2UOGCNUVENqObEb4SFk+S8Dnxq7K6aIsLVs/vDtlangl3PEO0ykaKXyK56swVF6Nho7VsA44uhw=="
-  "resolved" "https://registry.npmmirror.com/@types/codemirror/-/codemirror-0.0.108.tgz"
-  "version" "0.0.108"
-  dependencies:
-    "@types/tern" "*"
 
 "@types/codemirror@5.60.8":
   "integrity" "sha512-VjFgDF/eB+Aklcy15TtOTLQeMjTo07k7KAjql8OK5Dirr7a6sJY4T1uVBDuTVG9VEmn1uUsohOpYnVfgC6/jyw=="
@@ -2422,6 +2445,11 @@
   "resolved" "https://registry.npmmirror.com/image-size/-/image-size-0.5.5.tgz"
   "version" "0.5.5"
 
+"immediate@~3.0.5":
+  "integrity" "sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ=="
+  "resolved" "https://registry.npmmirror.com/immediate/-/immediate-3.0.6.tgz"
+  "version" "3.0.6"
+
 "immutability-helper@^3.1.1":
   "integrity" "sha512-Q0QaXjPjwIju/28TsugCHNEASwoCcJSyJV3uO1sOIQGI0jKgm9f41Lvz0DZj3n46cNCyAZTsEYoY4C2bVRUzyQ=="
   "resolved" "https://registry.npmmirror.com/immutability-helper/-/immutability-helper-3.1.1.tgz"
@@ -3097,10 +3125,24 @@
     "prelude-ls" "^1.2.1"
     "type-check" "~0.4.0"
 
+"lie@3.1.1":
+  "integrity" "sha512-RiNhHysUjhrDQntfYSfY4MU24coXXdEOgw9WGcKHNeEwffDYbF//u87M1EWaMGzuFoSbqW0C9C6lEEhDOAswfw=="
+  "resolved" "https://registry.npmmirror.com/lie/-/lie-3.1.1.tgz"
+  "version" "3.1.1"
+  dependencies:
+    "immediate" "~3.0.5"
+
 "lines-and-columns@^1.1.6":
   "integrity" "sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg=="
   "resolved" "https://registry.npmmirror.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz"
   "version" "1.2.4"
+
+"localforage@^1.10.0":
+  "integrity" "sha512-14/H1aX7hzBBmmh7sGPd+AOMkkIrHM3Z1PAyGgZigA1H1p5O5ANnMyWzvpAETtG68/dC4pC0ncy3+PPGzXZHPg=="
+  "resolved" "https://registry.npmmirror.com/localforage/-/localforage-1.10.0.tgz"
+  "version" "1.10.0"
+  dependencies:
+    "lie" "3.1.1"
 
 "locate-path@^3.0.0":
   "integrity" "sha512-7AO748wWnIhNqAuaty2ZWHkQHRSNfPVIsPIfwEOWO22AmaoVrWavlOcMR5nzTLNYvp36X220/maaRsrec1G65A=="
@@ -3156,10 +3198,10 @@
   dependencies:
     "yallist" "^4.0.0"
 
-"luxon@^2.0.2":
-  "integrity" "sha512-w+NAwWOUL5hO0SgwOHsMBAmZ15SoknmQXhSO0hIbJCAmPKSsGeK8MlmhYh2w6Iib38IxN2M+/ooXWLbeis7GuA=="
-  "resolved" "https://registry.npmmirror.com/luxon/-/luxon-2.4.0.tgz"
-  "version" "2.4.0"
+"luxon@^3.2.0":
+  "integrity" "sha512-zobTr7akeGHnv7eBOXcRgMeCP6+uyYsczwmeRCauvpvaAltgNyTbLH/+VaEAPUeWBT+1GuNmz4wC/6jtQzbbVA=="
+  "resolved" "https://registry.npmmirror.com/luxon/-/luxon-3.4.4.tgz"
+  "version" "3.4.4"
 
 "make-dir@^2.1.0":
   "integrity" "sha512-LS9X+dc8KLxXCb8dni79fLIIUA5VyZoyjSMCwTluaXA0o27cCK0bhXkpgw+sTXVpPy/lSO57ilRixqk0vDmtRA=="
@@ -3552,11 +3594,6 @@
   dependencies:
     "minimist" "^1.2.6"
 
-"moment@2.29.3":
-  "integrity" "sha512-c6YRvhEo//6T2Jz/vVtYzqBzwvPT95JBQ+smCytzf7c50oMZRsR/a4w88aD34I+/QVSfnoAnSBFPJHItlOMJVw=="
-  "resolved" "https://registry.npmmirror.com/moment/-/moment-2.29.3.tgz"
-  "version" "2.29.3"
-
 "moment@2.29.4":
   "integrity" "sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w=="
   "resolved" "https://registry.npmmirror.com/moment/-/moment-2.29.4.tgz"
@@ -3761,7 +3798,7 @@
   "resolved" "https://registry.npmmirror.com/obsidian-daily-notes-interface/-/obsidian-daily-notes-interface-0.9.4.tgz"
   "version" "0.9.4"
   dependencies:
-    "obsidian" "github:obsidianmd/obsidian-api#master"
+    "obsidian" "obsidianmd/obsidian-api#master"
     "tslib" "2.1.0"
 
 "obsidian-daily-notes-interface@0.8.4":
@@ -3769,25 +3806,29 @@
   "resolved" "https://registry.npmmirror.com/obsidian-daily-notes-interface/-/obsidian-daily-notes-interface-0.8.4.tgz"
   "version" "0.8.4"
   dependencies:
-    "obsidian" "github:obsidianmd/obsidian-api#master"
+    "obsidian" "obsidianmd/obsidian-api#master"
     "tslib" "2.1.0"
 
-"obsidian-dataview@^0.4.21":
-  "integrity" "sha512-Na0/3BDFn04jHN0La4F1YgoGg2AwKuH8UrL+oYAczXQDqOsvghGeuZBf4nATj1eDUk0HbVmrKYdnqoSec/Tt6Q=="
-  "resolved" "https://registry.npmmirror.com/obsidian-dataview/-/obsidian-dataview-0.4.25.tgz"
-  "version" "0.4.25"
+"obsidian-dataview@^0.5.66":
+  "integrity" "sha512-5hYF1p4RnBpKS0PqxNJjZDoqAk2XrDZ6H3EQ+JOwcQwkoTMbMPMOH1sw9zg1hV5ZWbh+/uAPCRAI/nmvr68yxw=="
+  "resolved" "https://registry.npmmirror.com/obsidian-dataview/-/obsidian-dataview-0.5.66.tgz"
+  "version" "0.5.66"
   dependencies:
+    "@codemirror/language" "git+https://github.com/lishid/cm-language.git"
+    "@codemirror/state" "^6.0.1"
+    "@codemirror/view" "^6.0.1"
     "emoji-regex" "^10.0.0"
-    "luxon" "^2.0.2"
+    "localforage" "^1.10.0"
+    "luxon" "^3.2.0"
     "obsidian-calendar-ui" "^0.3.12"
     "papaparse" "^5.3.1"
     "parsimmon" "^1.18.0"
     "preact" "^10.6.5"
 
-"obsidian-plugin-cli@^0.8.1":
-  "integrity" "sha512-PboFcOO5P3UVXohHTMX+oYUibcl3Y8GB9lgfTYhmJ67M69qBijKCRr2Oej0eeBevPLFtDAB7ALU0z76vOyBVLA=="
-  "resolved" "https://registry.npmmirror.com/obsidian-plugin-cli/-/obsidian-plugin-cli-0.8.1.tgz"
-  "version" "0.8.1"
+"obsidian-plugin-cli@^0.9.0":
+  "integrity" "sha512-V62+WF+tBFMajBXopO85XwxXAbIAocWwKYPWRNDb2CIIPE5JJJoSVC5ZQ/o2kLP+3A38Om1YUiBtzJ/2kbbm3g=="
+  "resolved" "https://registry.npmmirror.com/obsidian-plugin-cli/-/obsidian-plugin-cli-0.9.0.tgz"
+  "version" "0.9.0"
   dependencies:
     "@oclif/command" "^1"
     "@oclif/config" "^1"
@@ -3797,30 +3838,22 @@
     "cosmiconfig" "^7.0.0"
     "dedent" "^0.7.0"
     "esbuild" "^0.12.6"
-    "obsidian-utils" "^0.10.0"
+    "obsidian-utils" "^0.10.2"
     "prompts" "^2.4.0"
     "tslib" "^1"
     "update-notifier" "^5.1.0"
 
-"obsidian-utils@^0.10.0":
-  "integrity" "sha512-Mwhb94a81IwIY7tt5IOQjlSUYgcVjIYRCI0GMbEM9iUhrTOlHYYNek7Z5x+YjgX9CN1KjRKeCcCkA0K+PMKmBg=="
-  "resolved" "https://registry.npmmirror.com/obsidian-utils/-/obsidian-utils-0.10.0.tgz"
-  "version" "0.10.0"
+"obsidian-utils@^0.10.2":
+  "integrity" "sha512-LvD098hza7o+WnM7ra39xsvSazrjSLjynDsiMlCAE5Nv/mCcbYex72WeZkZ32TqdXLspTjfiI0pgRhKH4VuNEQ=="
+  "resolved" "https://registry.npmmirror.com/obsidian-utils/-/obsidian-utils-0.10.2.tgz"
+  "version" "0.10.2"
   dependencies:
     "date-fns" "^2.17.0"
     "execa" "^5.0.0"
     "node-fetch" "^2.6.1"
     "which" "^2.0.2"
 
-"obsidian@^0.15.3":
-  "integrity" "sha512-aiuBgYsHEdUlouN+BI7ZP/cLbIuhkL9gKteb9KaHXTqDFMncHP2XPCO8DjgnpOBay+rNX40Tf401nudobeG3hg=="
-  "resolved" "https://codeload.github.com/obsidianmd/obsidian-api/tar.gz/d4b79f95ccf3838a305915a137a844250766d023"
-  "version" "0.15.3"
-  dependencies:
-    "@types/codemirror" "0.0.108"
-    "moment" "2.29.3"
-
-"obsidian@github:obsidianmd/obsidian-api#master":
+"obsidian@^1.5.7-1", "obsidian@obsidianmd/obsidian-api#master":
   "resolved" "git+ssh://git@github.com/obsidianmd/obsidian-api.git#8b2eda0f24285636c8aa116972643e5233a23dc1"
   "version" "1.5.7"
   dependencies:
@@ -4724,10 +4757,10 @@
   "resolved" "https://registry.npmmirror.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz"
   "version" "2.0.1"
 
-"style-mod@^4.0.0":
-  "integrity" "sha512-OPhtyEjyyN9x3nhPsu76f52yUGXiZcgvsrFVtvTkyGRQJ0XK+GPc6ov1z+lRpbeabka+MYEQxOYRnt5nF30aMw=="
-  "resolved" "https://registry.npmmirror.com/style-mod/-/style-mod-4.0.0.tgz"
-  "version" "4.0.0"
+"style-mod@^4.0.0", "style-mod@^4.1.0":
+  "integrity" "sha512-wnD1HyVqpJUI2+eKZ+eo1UwghftP6yuFheBqqe+bWCotBjC2K1YnteJILRMs3SM4V/0dLEW1SC27MWP5y+mwmw=="
+  "resolved" "https://registry.npmmirror.com/style-mod/-/style-mod-4.1.2.tgz"
+  "version" "4.1.2"
 
 "supports-color@^5.3.0":
   "integrity" "sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow=="
