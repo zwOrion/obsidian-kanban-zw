@@ -1,4 +1,16 @@
 # Changelog
+## [1.7.0](https://github.com/zwOrion/obsidian-kanban-zw/compare/1.6.0...1.7.0) (2024-04-21)
+
+
+### Bug Fixes | Bug 修复
+
+* 添加单元功能默认初始化状态为false ([fc3588e](https://github.com/zwOrion/obsidian-kanban-zw/commit/fc3588eabc74cf2e683e92ab58356441a4fe83a8))
+
+
+### Features | 新功能
+
+* 增加禁止从已经是双链链接格式文本再新建连接配置；增加从卡片新建笔记后标题名称可以默认设置为文件名作为别名，去除路径 ([57f0040](https://github.com/zwOrion/obsidian-kanban-zw/commit/57f00409d388ef5e8ca12a164488749bc4ecf6d2))
+
 ## [1.6.0](https://github.com/zwOrion/obsidian-kanban-zw/compare/1.5.4...1.6.0) (2024-04-14)
 
 
