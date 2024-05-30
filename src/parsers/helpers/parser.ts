@@ -6,27 +6,37 @@ export interface FileAccessor {
   stats?: Stat;
 }
 
-export function markRangeForDeletion(
-  str: string,
-  range: { start: number; end: number }
-): string {
-  const len = range.end - range.start;
+export function markRangeForDeletion(str: string, range: { start: number; end: number }): string {
+  const len = str.length;
 
-  return (
-    str.slice(0, range.start) + '\u0000'.repeat(len) + str.slice(range.end)
-  );
+  let start = range.start;
+  while (start > 0 && str[start - 1] === ' ') start--;
+
+  let end = range.end;
+  while (end < len - 1 && str[end + 1] === ' ') end++;
+
+  return str.slice(0, start) + '\u0000'.repeat(end - start) + str.slice(end);
 }
 
 export function executeDeletion(str: string) {
-  return str.replace(/\s*\0+\s*/g, ' ').trim();
+  return str.replace(/ *\0+ */g, ' ').trim();
 }
 
 export function replaceNewLines(str: string) {
-  return str.trim().replace(/(\r\n|\n)/g, '<br>');
+  return str.trim().replace(/(?:\r\n|\n)/g, '<br>');
 }
 
 export function replaceBrs(str: string) {
   return str.replace(/<br>/g, '\n').trim();
+}
+
+export function indentNewLines(str: string) {
+  const useTab = (app.vault as any).getConfig('useTab');
+  return str.trim().replace(/(?:\r\n|\n)/g, useTab ? '\n\t' : '\n    ');
+}
+
+export function dedentNewLines(str: string) {
+  return str.trim().replace(/(?:\r\n|\n)(?: {4}|\t)/g, '\n');
 }
 
 export function parseLaneTitle(str: string) {

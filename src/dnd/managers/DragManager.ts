@@ -1,14 +1,13 @@
 import boxIntersect from 'box-intersect';
-import Preact from 'preact/compat';
-
-import { handleDragOrPaste } from 'src/components/Item/helpers';
+import EventEmitter from 'eventemitter3';
+import { RefObject, useCallback, useContext, useRef } from 'preact/compat';
 import { StateManager } from 'src/StateManager';
+import { handleDragOrPaste } from 'src/components/Item/helpers';
 
 import { DndManagerContext } from '../components/context';
 import { Coordinates, Entity, Hitbox, Side } from '../types';
 import { rafThrottle } from '../util/animation';
 import { createHTMLDndEntity } from '../util/createHTMLDndEntity';
-import { Emitter } from '../util/emitter';
 import {
   adjustHitboxForMovement,
   distanceBetween,
@@ -34,20 +33,9 @@ export interface ScrollEventData extends DragEventData {
   scrollStrength: number;
 }
 
-interface Events {
-  dragStart(data: DragEventData): void;
-  dragMove(data: DragEventData): void;
-  dragEnd(data: DragEventData): void;
-  beginDragScroll(data: ScrollEventData): void;
-  updateDragScroll(data: ScrollEventData): void;
-  endDragScroll(data: ScrollEventData): void;
-  dragEnter(data: DragEventData): void;
-  dragLeave(data: DragEventData): void;
-}
-
 export class DragManager {
   win: Window;
-  emitter: Emitter<Events>;
+  emitter: EventEmitter;
   hitboxEntities: Map<string, Entity>;
   scrollEntities: Map<string, Entity>;
 
@@ -66,7 +54,7 @@ export class DragManager {
 
   constructor(
     win: Window,
-    emitter: Emitter,
+    emitter: EventEmitter,
     hitboxEntities: Map<string, Entity>,
     scrollEntities: Map<string, Entity>
   ) {
@@ -91,14 +79,11 @@ export class DragManager {
 
   dragStart(e: PointerEvent, referenceElement?: HTMLElement) {
     const id =
-      referenceElement?.dataset.hitboxid ||
-      (e.currentTarget as HTMLElement).dataset.hitboxid;
+      referenceElement?.dataset.hitboxid || (e.currentTarget as HTMLElement).dataset.hitboxid;
 
     if (!id) return;
 
-    const styles = getComputedStyle(
-      referenceElement || (e.currentTarget as HTMLElement)
-    );
+    const styles = getComputedStyle(referenceElement || (e.currentTarget as HTMLElement));
 
     this.dragEntityId = id;
     this.dragOrigin = { x: e.pageX, y: e.pageY };
@@ -154,21 +139,10 @@ export class DragManager {
     this.primaryIntersection = undefined;
   }
 
-  dragEndHTML(
-    e: DragEvent,
-    viewId: string,
-    content: string[],
-    isLeave?: boolean
-  ) {
+  dragEndHTML(e: DragEvent, viewId: string, content: string[], isLeave?: boolean) {
     this.isHTMLDragging = false;
     if (!isLeave) {
-      this.dragEntity = createHTMLDndEntity(
-        e.pageX,
-        e.pageY,
-        content,
-        viewId,
-        e.view
-      );
+      this.dragEntity = createHTMLDndEntity(e.pageX, e.pageY, content, viewId, e.view);
       this.emitter.emit('dragEnd', this.getDragEventData());
     }
 
@@ -192,12 +166,7 @@ export class DragManager {
   }
 
   calculateDragIntersect() {
-    if (
-      !this.dragEntity ||
-      !this.dragPosition ||
-      !this.dragOrigin ||
-      !this.dragOriginHitbox
-    ) {
+    if (!this.dragEntity || !this.dragPosition || !this.dragOrigin || !this.dragOriginHitbox) {
       return;
     }
 
@@ -211,7 +180,7 @@ export class DragManager {
     this.hitboxEntities.forEach((entity) => {
       const data = entity.getData();
 
-      if (win === data.win && data.accepts.includes(type)) {
+      if (win === data.win && (data.accepts.includes(type) || data.acceptsSort?.includes(type))) {
         hitboxEntities.push(entity);
         hitboxHitboxes.push(entity.getHitbox());
       }
@@ -238,24 +207,19 @@ export class DragManager {
 
     const isScrolling = this.handleScrollIntersect(
       dragHitbox,
-      this.dragEntity.entityId,
+      this.dragEntity,
       scrollHitboxes,
       scrollEntities
     );
 
     if (!isScrolling) {
-      this.handleHitboxIntersect(
-        dragHitbox,
-        this.dragEntity.entityId,
-        hitboxHitboxes,
-        hitboxEntities
-      );
+      this.handleHitboxIntersect(dragHitbox, this.dragEntity, hitboxHitboxes, hitboxEntities);
     }
   }
 
   handleScrollIntersect(
     dragHitbox: Hitbox,
-    dragId: string,
+    dragEntity: Entity,
     hitboxes: Hitbox[],
     hitboxEntities: Entity[]
   ) {
@@ -263,16 +227,11 @@ export class DragManager {
       (match) => hitboxEntities[match[1]]
     );
 
-    const scrollIntersection = getScrollIntersection(
-      scrollHits,
-      dragHitbox,
-      dragId
-    );
+    const scrollIntersection = getScrollIntersection(scrollHits, dragHitbox, dragEntity);
 
     if (
       this.scrollIntersection &&
-      (!scrollIntersection ||
-        scrollIntersection[0] !== this.scrollIntersection[0])
+      (!scrollIntersection || scrollIntersection[0] !== this.scrollIntersection[0])
     ) {
       const [scrollEntity, scrollStrength] = this.scrollIntersection;
       const scrollEntityData = scrollEntity.getData();
@@ -296,8 +255,7 @@ export class DragManager {
 
     if (
       scrollIntersection &&
-      (!this.scrollIntersection ||
-        this.scrollIntersection[0] !== scrollIntersection[0])
+      (!this.scrollIntersection || this.scrollIntersection[0] !== scrollIntersection[0])
     ) {
       const [scrollEntity, scrollStrength] = scrollIntersection;
       const scrollEntityData = scrollEntity.getData();
@@ -347,7 +305,7 @@ export class DragManager {
 
   handleHitboxIntersect(
     dragHitbox: Hitbox,
-    dragId: string,
+    dragEntity: Entity,
     hitboxes: Hitbox[],
     hitboxEntities: Entity[]
   ) {
@@ -355,24 +313,14 @@ export class DragManager {
       (match) => hitboxEntities[match[1]]
     );
 
-    const primaryIntersection = getBestIntersect(hits, dragHitbox, dragId);
+    const primaryIntersection = getBestIntersect(hits, dragHitbox, dragEntity);
 
-    if (
-      this.primaryIntersection &&
-      this.primaryIntersection !== primaryIntersection
-    ) {
-      this.emitter.emit(
-        'dragLeave',
-        this.getDragEventData(),
-        this.primaryIntersection.entityId
-      );
+    if (this.primaryIntersection && this.primaryIntersection !== primaryIntersection) {
+      this.emitter.emit('dragLeave', this.getDragEventData(), this.primaryIntersection.entityId);
       this.primaryIntersection = undefined;
     }
 
-    if (
-      primaryIntersection &&
-      this.primaryIntersection !== primaryIntersection
-    ) {
+    if (primaryIntersection && this.primaryIntersection !== primaryIntersection) {
       this.emitter.emit(
         'dragEnter',
         {
@@ -392,22 +340,30 @@ const cancelEvent = (e: TouchEvent) => {
 };
 
 export function useDragHandle(
-  droppableElement: Preact.RefObject<HTMLElement | null>,
-  handleElement: Preact.RefObject<HTMLElement | null>
+  droppableElement: RefObject<HTMLElement | null>,
+  handleElement: RefObject<HTMLElement | null>
 ) {
-  const dndManager = Preact.useContext(DndManagerContext);
+  const dndManager = useContext(DndManagerContext);
+  const unbind = useRef(() => {});
 
-  Preact.useEffect(() => {
-    const droppable = droppableElement.current;
-    const handle = handleElement.current;
-
-    if (!dndManager || !droppable || !handle) {
-      return;
+  return useCallback((el: HTMLElement) => {
+    if (handleElement.current !== el) {
+      unbind.current();
+      unbind.current = () => {};
     }
+    if (!el) return;
 
+    const handle = el;
     const onPointerDown = (e: PointerEvent) => {
-      if (e.defaultPrevented || (e.target as HTMLElement).dataset.ignoreDrag) {
-        return;
+      if (e.defaultPrevented || !dndManager || !droppableElement.current) return;
+      const droppable = droppableElement.current;
+
+      let node = e.targetNode;
+      while (node) {
+        if (node.instanceOf(HTMLElement) && node.dataset.ignoreDrag) {
+          return;
+        }
+        node = node.parentElement;
       }
 
       // We only care about left mouse / touch contact
@@ -418,6 +374,7 @@ export function useDragHandle(
 
       const win = e.view;
       const isTouchEvent = ['pen', 'touch'].includes(e.pointerType);
+      const pointerId = e.pointerId;
 
       if (!isTouchEvent) {
         e.stopPropagation();
@@ -446,6 +403,7 @@ export function useDragHandle(
       }
 
       const onMove = rafThrottle(win, (e: PointerEvent) => {
+        if (e.pointerId !== pointerId) return;
         if (isTouchEvent) {
           if (!isDragging) {
             if (
@@ -482,6 +440,7 @@ export function useDragHandle(
       });
 
       const onEnd = (e: PointerEvent) => {
+        if (e.pointerId !== pointerId) return;
         win.clearTimeout(longPressTimeout);
         isDragging = false;
 
@@ -513,12 +472,12 @@ export function useDragHandle(
       handle.removeEventListener('pointerdown', onPointerDown);
       handle.removeEventListener('touchstart', swallowTouchEvent);
     };
-  }, [droppableElement, handleElement, dndManager]);
+  }, []);
 }
 
 export function createHTMLDndHandlers(stateManager: StateManager) {
-  const dndManager = Preact.useContext(DndManagerContext);
-  const onDragOver = Preact.useCallback(
+  const dndManager = useContext(DndManagerContext);
+  const onDragOver = useCallback(
     (e: DragEvent) => {
       if (dndManager.dragManager.isHTMLDragging) {
         e.preventDefault();
@@ -528,27 +487,18 @@ export function createHTMLDndHandlers(stateManager: StateManager) {
       }
 
       dndManager.dragManager.onHTMLDragLeave(() => {
-        dndManager.dragManager.dragEndHTML(
-          e,
-          stateManager.getAView().id,
-          [],
-          true
-        );
+        dndManager.dragManager.dragEndHTML(e, stateManager.getAView().id, [], true);
       });
     },
     [dndManager, stateManager]
   );
 
-  const onDrop = Preact.useCallback(
+  const onDrop = useCallback(
     async (e: DragEvent) => {
       dndManager.dragManager.dragEndHTML(
         e,
         stateManager.getAView().id,
-        await handleDragOrPaste(
-          stateManager,
-          e,
-          activeWindow as Window & typeof globalThis
-        ),
+        await handleDragOrPaste(stateManager, e, activeWindow as Window & typeof globalThis),
         false
       );
     },

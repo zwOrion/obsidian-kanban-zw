@@ -1,94 +1,82 @@
-import { App, TFile } from 'obsidian';
-
-import { Board, FileMetadata, Item } from 'src/components/types';
-import { t } from 'src/lang/helpers';
+import { App, TFile, moment } from 'obsidian';
 import { KanbanSettings } from 'src/Settings';
 import { StateManager } from 'src/StateManager';
+import { anyToString } from 'src/components/Item/MetadataTable';
+import { Board, FileMetadata, Item } from 'src/components/types';
+import { defaultSort } from 'src/helpers/util';
+import { t } from 'src/lang/helpers';
 
-export const frontMatterKey = 'kanban-plugin';
+export const frontmatterKey = 'kanban-plugin';
 
 export enum ParserFormats {
   List,
 }
 
 export interface BaseFormat {
-  newItem(
-    content: string,
-    isComplete?: boolean,
-    forceEdit?: boolean
-  ): Promise<Item>;
-  updateItemContent(item: Item, content: string): Promise<Item>;
+  newItem(content: string, checkChar: string, forceEdit?: boolean): Item;
+  updateItemContent(item: Item, content: string): Item;
   boardToMd(board: Board): string;
-  mdToBoard(md: string): Promise<Board>;
-  reparseBoard(): Promise<Board>;
+  mdToBoard(md: string): Board;
+  reparseBoard(): Board;
 }
 
 export const completeString = `**${t('Complete')}**`;
 export const archiveString = '***';
-export const basicFrontmatter = [
-  '---',
-  '',
-  `${frontMatterKey}: basic`,
-  '',
-  '---',
-  '',
-  '',
-].join('\n');
+export const basicFrontmatter = ['---', '', `${frontmatterKey}: board`, '', '---', '', ''].join(
+  '\n'
+);
 
-export function settingsToCodeblock(settings: KanbanSettings): string {
+export function settingsToCodeblock(board: Board): string {
   return [
     '',
     '',
     '%% kanban:settings',
     '```',
-    JSON.stringify(settings),
+    JSON.stringify(board.data.settings),
     '```',
     '%%',
   ].join('\n');
 }
 
-export function getSearchValue(
-  dom: HTMLDivElement,
-  tags?: string[],
-  fileMetadata?: FileMetadata
-) {
-  let searchValue = dom.innerText.trim();
+export function getSearchValue(item: Item, stateManager: StateManager) {
+  const fileMetadata = item.data.metadata.fileMetadata;
+  const { titleSearchRaw } = item.data;
 
-  if (tags?.length) {
-    searchValue += ' ' + tags.join(' ');
-  }
+  const searchValue = [titleSearchRaw];
 
   if (fileMetadata) {
-    const keys = Object.keys(fileMetadata).join(' ');
-    const values = Object.values(fileMetadata)
-      .map((v) => {
-        if (Array.isArray(v.value)) {
-          return v.value.join(' ');
-        }
+    const presentKeys = Object.keys(fileMetadata).filter((k) => {
+      return item.data.metadata.fileMetadataOrder?.includes(k);
+    });
+    if (presentKeys.length) {
+      const keys = anyToString(presentKeys, stateManager);
+      const values = anyToString(
+        presentKeys.map((k) => fileMetadata[k]),
+        stateManager
+      );
 
-        return v.value.toString();
-      })
-      .join(' ');
-
-    searchValue += ' ' + keys + ' ' + values;
+      if (keys) searchValue.push(keys);
+      if (values) searchValue.push(values);
+    }
   }
 
-  return searchValue.toLocaleLowerCase();
+  if (item.data.metadata.time) {
+    searchValue.push(item.data.metadata.time.format('LLLL'));
+    searchValue.push(anyToString(item.data.metadata.time, stateManager));
+  } else if (item.data.metadata.date) {
+    searchValue.push(item.data.metadata.date.format('LLLL'));
+    searchValue.push(anyToString(item.data.metadata.date, stateManager));
+  }
+
+  return searchValue.join(' ').toLocaleLowerCase();
 }
 
-export function getDataViewCache(
-  app: App,
-  linkedFile: TFile,
-  sourceFile: TFile
-) {
+export function getDataViewCache(app: App, linkedFile: TFile, sourceFile: TFile) {
   if (
     (app as any).plugins.enabledPlugins.has('dataview') &&
     (app as any).plugins?.plugins?.dataview?.api
   ) {
-    return (app as any).plugins.plugins.dataview.api.page(
-      linkedFile.path,
-      sourceFile.path
-    );
+    return (app as any).plugins.plugins.dataview.api.page(linkedFile.path, sourceFile.path);
   }
 }
 
@@ -126,11 +114,7 @@ export function getLinkedPageMetadata(
   }
 
   const cache = stateManager.app.metadataCache.getFileCache(linkedFile);
-  const dataviewCache = getDataViewCache(
-    stateManager.app,
-    linkedFile,
-    stateManager.file
-  );
+  const dataviewCache = getDataViewCache(stateManager.app, linkedFile, stateManager.file);
 
   if (!cache && !dataviewCache) {
     return {};
@@ -172,48 +156,73 @@ export function getLinkedPageMetadata(
 
             seenTags[t] = true;
             return true;
-          }),
+          })
+          .sort(defaultSort),
       };
 
       haveData = true;
       return;
     }
 
-    const cacheVal = getPageData(cache?.frontmatter, k.metadataKey);
     const dataviewVal = getPageData(dataviewCache, k.metadataKey);
+    let cacheVal = getPageData(cache?.frontmatter, k.metadataKey);
+    if (
+      cacheVal !== null &&
+      cacheVal !== undefined &&
+      !(Array.isArray(cacheVal) && cacheVal.length === 0)
+    ) {
+      if (typeof cacheVal === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}/.test(cacheVal)) {
+          cacheVal = moment(cacheVal);
+        } else if (/^\[\[[^\]]+\]\]$/.test(cacheVal)) {
+          const link = (cache.frontmatterLinks || []).find((l) => l.key === k.metadataKey);
+          if (link) {
+            const file = stateManager.app.metadataCache.getFirstLinkpathDest(
+              link.link,
+              stateManager.file.path
+            );
+            if (file) {
+              cacheVal = file;
+            }
+          }
+        }
+      } else if (Array.isArray(cacheVal)) {
+        cacheVal = cacheVal.map<any>((v, i) => {
+          if (typeof v === 'string' && /^\[\[[^\]]+\]\]$/.test(v)) {
+            const link = (cache.frontmatterLinks || []).find(
+              (l) => l.key === k.metadataKey + '.' + i.toString()
+            );
+            if (link) {
+              const file = stateManager.app.metadataCache.getFirstLinkpathDest(
+                link.link,
+                stateManager.file.path
+              );
+              if (file) {
+                return file;
+              }
+            }
+          }
+          return v;
+        });
+      }
 
-    if (cacheVal) {
       order.push(k.metadataKey);
       metadata[k.metadataKey] = {
         ...k,
         value: cacheVal,
       };
       haveData = true;
-    } else if (dataviewVal) {
+    } else if (
+      dataviewVal !== undefined &&
+      dataviewVal !== null &&
+      !(Array.isArray(dataviewVal) && dataviewVal.length === 0)
+    ) {
       const cachedValue = dataviewCache[k.metadataKey];
-      let val = Array.isArray(cachedValue)
-        ? cachedValue
-        : cachedValue.values || cachedValue.val || cachedValue;
-
-      // Protect against proxy values
-      if (
-        val === cachedValue &&
-        !Array.isArray(cachedValue) &&
-        typeof val === 'object'
-      ) {
-        val = { ...cachedValue };
-      } else if (
-        !Array.isArray(val) &&
-        typeof val !== 'string' &&
-        typeof val !== 'number'
-      ) {
-        return;
-      }
 
       order.push(k.metadataKey);
       metadata[k.metadataKey] = {
         ...k,
-        value: val,
+        value: cachedValue,
       };
       haveData = true;
     }
@@ -225,10 +234,7 @@ export function getLinkedPageMetadata(
   };
 }
 
-export function shouldRefreshBoard(
-  oldSettings: KanbanSettings,
-  newSettings: KanbanSettings
-) {
+export function shouldRefreshBoard(oldSettings: KanbanSettings, newSettings: KanbanSettings) {
   if (!oldSettings && newSettings) {
     return true;
   }
@@ -240,8 +246,10 @@ export function shouldRefreshBoard(
     'link-date-to-daily-note',
     'date-format',
     'time-format',
-    'hide-date-in-title',
-    'hide-tags-in-title',
+    'move-dates',
+    'move-tags',
+    'inline-metadata-position',
+    'move-task-metadata',
     'hide-card-count',
     'tag-colors',
     'date-colors',

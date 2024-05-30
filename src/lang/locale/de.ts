@@ -1,11 +1,11 @@
 // Deutsch
+import { Lang } from './en';
 
-export default {
+const lang: Partial<Lang> = {
   // main.ts
   'Open as kanban board': 'Öffne als Kanban-Board',
   'Create new board': 'Erstelle ein neues Board',
-  'Archive completed cards in active board':
-    'Archiviere fertiggestellte Karten im aktiven Board',
+  'Archive completed cards in active board': 'Archiviere fertiggestellte Karten im aktiven Board',
   'Error: current file is not a Kanban board':
     'Fehler: Momentan geöffnete Datei ist kein Kanban-Board',
   'Convert empty note to Kanban': 'Konvertiere leere Notiz in ein Kanban-Board',
@@ -13,8 +13,7 @@ export default {
     'Fehler: Kanban konnte nicht erstellt werden, momentan geöffnete Datei ist nicht leer',
   'New kanban board': 'Neues Kanban-Board',
   'Untitled Kanban': 'Unbenanntes Kanban',
-  'Toggle between Kanban and markdown mode':
-    'Wechsle zwischen Kanban und Markdown Modus',
+  'Toggle between Kanban and markdown mode': 'Wechsle zwischen Kanban und Markdown Modus',
 
   // KanbanView.tsx
   'Open as markdown': 'Öffne als Markdown',
@@ -54,9 +53,6 @@ export default {
   'Notes created from Kanban cards will be placed in this folder. If blank, they will be placed in the default location for this vault.':
     'Notizen, welche aus einer Kanban-Karte erstellt wurden, werden in diesem Ordner platziert. Falls leer, werden die Einstellungen des Vaults verwendet.',
   'Default folder': 'Standard Ordner',
-  'Lane width': 'Schienen Breite',
-  'Enter a number to set the lane width in pixels.':
-    'Gebe ein Zahl ein, um die Schienen Breite in Pixeln einzustellen.',
   'Maximum number of archived cards': 'Maximale Anzahl archivierter Karten.',
   "Archived cards can be viewed in markdown mode. This setting will begin removing old cards once the limit is reached. Setting this value to -1 will allow a board's archive to grow infinitely.":
     'Archivierte Karten können im Markdown-Modus betrachtet werden. Diese Einstellung wird alte Karten löschen, sobald das Limit erreicht wird. Eine Einstellung von -1 setzt das Archiv auf eine unendliche Größe.',
@@ -82,30 +78,18 @@ export default {
   'This format will be used when displaying dates in Kanban cards.':
     'Dieses Format wird verwendet, wenn ein Datum in einer Kanban-Karte angezeigt wird.',
   'Show relative date': 'Zeige relatives Datum',
-  "When toggled, cards will display the distance between today and the card's date. eg. 'In 3 days', 'A month ago'":
-    "Wenn aktiviert, wird die Zeitspanne zwischen Heute und dem Datum angezeigt. Zum Beispiel: 'In 3 Tagen', 'Vor einem Monat'",
-  'Hide card display dates': 'Verstecke Karten Datum',
-  'When toggled, formatted dates will not be displayed on the card. Relative dates will still be displayed if they are enabled.':
-    'Wenn aktiviert, werden formatierte Daten nicht auf der Karte angezeigt. Relative Daten werden dennoch angezeigt, solange sie aktiviert sind.',
-  'Hide dates in card titles': 'Verstecke Daten im Titel der Karte',
-  'When toggled, dates will be hidden card titles. This will prevent dates from being included in the title when creating new notes.':
-    'Wenn aktiviert, werden Daten nicht im Titel der Karte angezeigt. Dies verhindert, dass Daten im Titel neu erstellter Notizen vorhanden sind.',
   'Link dates to daily notes': 'Verbinde Daten zu Daily Notes',
   'When toggled, dates will link to daily notes. Eg. [[2021-04-26]]':
     'Wenn aktiviert, werden Daten mit Daily Notes verbunden. Zum Beispiel [[26.4.2021]]',
-  'Add date and time to archived cards':
-    'Füge Datum und Uhrzeit zu archivierten Notizen hinzu',
+  'Add date and time to archived cards': 'Füge Datum und Uhrzeit zu archivierten Notizen hinzu',
   'When toggled, the current date and time will be added to the card title when it is archived. Eg. - [ ] 2021-05-14 10:00am My card title':
     'Wenn aktiviert, wird das momentane Datum und die momentane Zeit am Anfang einer Karte hinzugefügt, wenn sie archiviert wird. Zum Beispiel: - [ ] 14.05.2021 10:00 Mein Karten Titel',
   'Archive date/time separator': 'Datum/Uhrzeit Trenner für das Archiv',
   'This will be used to separate the archived date/time from the title':
     'Dies wird verwendet, um das Datum und die Uhrzeit archivierter Karten vom Titel zu trennen',
-  'Archive date/time format':
-    'Format des Datums und der Uhrzeit für das Archiv',
+  'Archive date/time format': 'Format des Datums und der Uhrzeit für das Archiv',
   'Kanban Plugin': 'Kanban Erweiterung',
   'New line trigger': 'Taste für neue Zeile', //No exact translation, but makes sense in App
-  'Select whether Enter or Shift+Enter creates a new line. The opposite of what you choose will create and complete editing of cards and lanes.':
-    'Wähle aus ob Enter oder Umschalttaste+Enter eine neue Zeile erstellen soll. Das Gegenteil kannst du verwenden um die Karte zu erstellen oder das bearbeiten der Karte oder Schiene zu beenden.',
   'Shift + Enter': 'Umschalttaste + Enter',
   Enter: 'Enter',
   'Prepend / append new cards': 'Neue Karten voranfügen / anhängen',
@@ -113,12 +97,6 @@ export default {
     'Diese Einstellung gibt an ob neue Karten am Anfang oder am Ende einer Liste hinzugefügt werden.',
   Prepend: 'Voranfügen',
   Append: 'Anhängen',
-  'Hide tags in card titles': 'Ausblenden von Tags in Kartentiteln',
-  'When toggled, tags will be hidden card titles. This will prevent tags from being included in the title when creating new notes.':
-    'Ist diese Einstellung an, so werden Tags im Kartentitel nicht angezeigt. Dadurch wird verhindert, dass Tags beim Erstellen neuer Notizen in den Titel aufgenommen werden.',
-  'Hide card display tags': 'Ausblenden von Kartenanzeige-Tags',
-  'When toggled, tags will not be displayed below the card title.':
-    'Ist diese Einstellung an, werden Tags nicht unter dem Kartentitel angezeigt.',
   'Linked Page Metadata': 'Metadaten für verknüpfte (verlinkte) Notizen',
   'Display metadata for the first note linked within a card. Specify which metadata keys to display below. An optional label can be provided, and labels can be hidden altogether.':
     'Zeigen Sie Metadaten für die erste Notiz an, die innerhalb einer Karte verknüpft ist. Geben Sie an, welche Metadatenschlüssel unten angezeigt werden sollen. Ein optionales Label kann hinzugefügt werden, es kann aber auch vollständig ausgeblendet werden.',
@@ -163,8 +141,7 @@ export default {
 
   // components/Lane/LaneForm.tsx
   'Enter list title...': 'Listen Titel eingeben..',
-  'Mark cards in this list as complete':
-    'Markiere Karten in dieser Liste als fertiggestellt',
+  'Mark cards in this list as complete': 'Markiere Karten in dieser Liste als fertiggestellt',
   'Add list': 'Liste hinzufügen',
   'Add a list': 'Füge eine Liste hinzu',
 
@@ -187,3 +164,5 @@ export default {
   'Archive list': 'Archiviere List',
   'Delete list': 'Lösche Liste',
 };
+
+export default lang;

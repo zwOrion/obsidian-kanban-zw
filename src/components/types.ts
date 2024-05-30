@@ -1,14 +1,16 @@
 import { TFile } from 'obsidian';
-
-import { Nestable } from 'src/dnd/types';
-import { FileAccessor } from 'src/parsers/helpers/parser';
 import { KanbanSettings } from 'src/Settings';
+import { Nestable } from 'src/dnd/types';
+import { InlineField } from 'src/parsers/helpers/inlineMetadata';
+import { FileAccessor } from 'src/parsers/helpers/parser';
 
 export enum LaneSort {
   TitleAsc,
   TitleDsc,
   DateAsc,
   DateDsc,
+  TagsAsc,
+  TagsDsc,
 }
 
 export interface LaneData {
@@ -17,7 +19,7 @@ export interface LaneData {
   maxItems?: number;
   dom?: HTMLDivElement;
   forceEditMode?: boolean;
-  sorted?: LaneSort;
+  sorted?: LaneSort | string;
 }
 
 export interface DataKey {
@@ -27,13 +29,17 @@ export interface DataKey {
   containsMarkdown: boolean;
 }
 
-export interface TagColorKey {
+export interface TagColor {
   tagKey: string;
   color: string;
   backgroundColor: string;
 }
 
-export interface DateColorKey {
+export interface TagSort {
+  tag: string;
+}
+
+export interface DateColor {
   isToday?: boolean;
   isBefore?: boolean;
   isAfter?: boolean;
@@ -58,7 +64,7 @@ export interface FileMetadata {
   [k: string]: PageData;
 }
 
-export interface ItemMetaData {
+export interface ItemMetadata {
   dateStr?: string;
   date?: moment.Moment;
   timeStr?: string;
@@ -68,16 +74,18 @@ export interface ItemMetaData {
   file?: TFile | null;
   fileMetadata?: FileMetadata;
   fileMetadataOrder?: string[];
+  inlineMetadata?: InlineField[];
 }
 
 export interface ItemData {
   blockId?: string;
-  isComplete?: boolean;
+  checked: boolean;
+  checkChar: string;
   title: string;
   titleRaw: string;
-  titleSearch?: string;
-  metadata: ItemMetaData;
-  dom?: HTMLDivElement;
+  titleSearch: string;
+  titleSearchRaw: string;
+  metadata: ItemMetadata;
   forceEditMode?: boolean;
 }
 
@@ -98,8 +106,9 @@ export type Item = Nestable<ItemData>;
 export type Lane = Nestable<LaneData, Item>;
 export type Board = Nestable<BoardData, Lane>;
 export type MetadataSetting = Nestable<DataKey>;
-export type TagColorSetting = Nestable<TagColorKey>;
-export type DateColorSetting = Nestable<DateColorKey>;
+export type TagColorSetting = Nestable<TagColor>;
+export type TagSortSetting = Nestable<TagSort>;
+export type DateColorSetting = Nestable<DateColor>;
 
 export const DataTypes = {
   Item: 'item',
@@ -107,6 +116,7 @@ export const DataTypes = {
   Board: 'board',
   MetadataSetting: 'metadata-setting',
   TagColorSetting: 'tag-color',
+  TagSortSetting: 'tag-sort',
   DateColorSetting: 'date-color',
 };
 
@@ -132,6 +142,12 @@ export const MetadataSettingTemplate = {
   children: [] as any[],
 };
 
+export const TagSortSettingTemplate = {
+  accepts: [DataTypes.TagSortSetting],
+  type: DataTypes.TagSortSetting,
+  children: [] as any[],
+};
+
 // TODO: all this is unecessary because these aren't sortable
 export const TagColorSettingTemplate = {
   accepts: [] as string[],
@@ -145,3 +161,21 @@ export const DateColorSettingTemplate = {
   type: DataTypes.DateColorSetting,
   children: [] as any[],
 };
+
+export interface EditCoordinates {
+  x: number;
+  y: number;
+}
+
+export enum EditingState {
+  cancel,
+  complete,
+}
+
+export type EditState = EditCoordinates | EditingState;
+
+export function isEditing(state: EditState): state is EditCoordinates {
+  if (state === null) return false;
+  if (typeof state === 'number') return false;
+  return true;
+}

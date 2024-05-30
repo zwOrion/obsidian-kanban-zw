@@ -1,46 +1,39 @@
-import { App, TAbstractFile, TFile } from 'obsidian';
-import {
-  getDailyNoteSettings,
-  getDateFromFile,
-} from 'obsidian-daily-notes-interface';
+import { App, TFile } from 'obsidian';
+import { getDailyNoteSettings, getDateFromFile } from 'obsidian-daily-notes-interface';
+
+import { frontmatterKey } from './parsers/common';
 
 export function gotoNextDailyNote(app: App, file: TFile) {
-  const date = getDateFromFile(file, 'day');
+  const date = getDateFromFile(file as any, 'day');
 
   if (!date || !date.isValid()) {
     return;
   }
 
-  const dailyNotePlugin = (app as any).internalPlugins.plugins['daily-notes']
-    .instance;
+  const dailyNotePlugin = (app as any).internalPlugins.plugins['daily-notes'].instance;
 
   dailyNotePlugin.gotoNextExisting(date);
 }
 
 export function gotoPrevDailyNote(app: App, file: TFile) {
-  const date = getDateFromFile(file, 'day');
+  const date = getDateFromFile(file as any, 'day');
 
   if (!date || !date.isValid()) {
     return;
   }
 
-  const dailyNotePlugin = (app as any).internalPlugins.plugins['daily-notes']
-    .instance;
+  const dailyNotePlugin = (app as any).internalPlugins.plugins['daily-notes'].instance;
 
   dailyNotePlugin.gotoPreviousExisting(date);
 }
 
 export function buildLinkToDailyNote(app: App, dateStr: string) {
   const dailyNoteSettings = getDailyNoteSettings();
-  const shouldUseMarkdownLinks = !!(app.vault as any).getConfig(
-    'useMarkdownLinks'
-  );
+  const shouldUseMarkdownLinks = !!(app.vault as any).getConfig('useMarkdownLinks');
 
   if (shouldUseMarkdownLinks) {
     return `[${dateStr}](${
-      dailyNoteSettings.folder
-        ? `${encodeURIComponent(dailyNoteSettings.folder)}/`
-        : ''
+      dailyNoteSettings.folder ? `${encodeURIComponent(dailyNoteSettings.folder)}/` : ''
     }${encodeURIComponent(dateStr)}.md)`;
   }
 
@@ -56,19 +49,17 @@ export function hasFrontmatterKeyRaw(data: string) {
     return false;
   }
 
-  if (!match[1].contains('kanban-plugin')) {
+  if (!match[1].contains(frontmatterKey)) {
     return false;
   }
 
   return true;
 }
 
-export function hasFrontmatterKey(file: TAbstractFile, app: App) {
+export function hasFrontmatterKey(file: TFile) {
   if (!file) return false;
-
-  const cache = app.metadataCache.getFileCache(file as TFile);
-
-  return !!cache?.frontmatter && !!cache?.frontmatter['kanban-plugin'];
+  const cache = app.metadataCache.getFileCache(file);
+  return !!cache?.frontmatter?.[frontmatterKey];
 }
 
 export function laneTitleWithMaxItems(title: string, maxItems?: number) {

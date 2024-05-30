@@ -1,12 +1,11 @@
 import classcat from 'classcat';
 import { getLinkpath, moment } from 'obsidian';
-import Preact from 'preact/compat';
-
-import { t } from 'src/lang/helpers';
+import { JSX, useMemo } from 'preact/compat';
 import { StateManager } from 'src/StateManager';
+import { t } from 'src/lang/helpers';
 
 import { c } from '../helpers';
-import { DateColorKey, Item } from '../types';
+import { DateColor, Item } from '../types';
 
 export function getRelativeDate(date: moment.Moment, time: moment.Moment) {
   if (time) {
@@ -44,21 +43,16 @@ export function RelativeDate({ item, stateManager }: DateProps) {
     return null;
   }
 
-  const relativeDate = getRelativeDate(
-    item.data.metadata.date,
-    item.data.metadata.time
-  );
+  const relativeDate = getRelativeDate(item.data.metadata.date, item.data.metadata.time);
 
-  return (
-    <span className={c('item-metadata-date-relative')}>{relativeDate}</span>
-  );
+  return <span className={c('item-metadata-date-relative')}>{relativeDate}</span>;
 }
 
 interface DateAndTimeProps {
-  onEditDate?: Preact.JSX.MouseEventHandler<HTMLSpanElement>;
-  onEditTime?: Preact.JSX.MouseEventHandler<HTMLSpanElement>;
+  onEditDate?: JSX.MouseEventHandler<HTMLSpanElement>;
+  onEditTime?: JSX.MouseEventHandler<HTMLSpanElement>;
   filePath: string;
-  getDateColor: (date: moment.Moment) => DateColorKey;
+  getDateColor: (date: moment.Moment) => DateColor;
 }
 
 export function DateAndTime({
@@ -69,28 +63,28 @@ export function DateAndTime({
   onEditTime,
   getDateColor,
 }: DateProps & DateAndTimeProps) {
-  const hideDateDisplay = stateManager.useSetting('hide-date-display');
+  const moveDates = stateManager.useSetting('move-dates');
   const dateFormat = stateManager.useSetting('date-format');
   const timeFormat = stateManager.useSetting('time-format');
   const dateDisplayFormat = stateManager.useSetting('date-display-format');
   const shouldLinkDate = stateManager.useSetting('link-date-to-daily-note');
 
-  const dateColor = Preact.useMemo(() => {
-    if (!item.data.metadata.date) return null;
-    return getDateColor(item.data.metadata.date);
-  }, [item.data.metadata.date, getDateColor]);
+  const targetDate = item.data.metadata.time ?? item.data.metadata.date;
+  const dateColor = useMemo(() => {
+    if (!targetDate) return null;
+    return getDateColor(targetDate);
+  }, [targetDate, getDateColor]);
 
-  if (hideDateDisplay || !item.data.metadata.date) return null;
+  if (!moveDates || !targetDate) return null;
 
-  const dateStr = item.data.metadata.date.format(dateFormat);
+  const dateStr = targetDate.format(dateFormat);
 
   if (!dateStr) return null;
 
+  const hasDate = !!item.data.metadata.date;
   const hasTime = !!item.data.metadata.time;
-  const dateDisplayStr = item.data.metadata.date.format(dateDisplayFormat);
-  const timeDisplayStr = !hasTime
-    ? null
-    : item.data.metadata.time.format(timeFormat);
+  const dateDisplayStr = targetDate.format(dateDisplayFormat);
+  const timeDisplayStr = !hasTime ? null : targetDate.format(timeFormat);
 
   const datePath = dateStr ? getLinkpath(dateStr) : null;
   const isResolved = dateStr
@@ -128,19 +122,22 @@ export function DateAndTime({
       }
       className={classcat([
         c('item-metadata-date-wrapper'),
+        c('date'),
         {
           'has-background': !!dateColor?.backgroundColor,
         },
       ])}
     >
-      <span
-        {...dateProps}
-        className={`${c('item-metadata-date')} ${
-          !shouldLinkDate ? 'is-button' : ''
-        }`}
-      >
-        {date}
-      </span>{' '}
+      {hasDate && (
+        <>
+          <span
+            {...dateProps}
+            className={`${c('item-metadata-date')} ${!shouldLinkDate ? 'is-button' : ''}`}
+          >
+            {date}
+          </span>{' '}
+        </>
+      )}
       {hasTime && (
         <span
           onClick={onEditTime}

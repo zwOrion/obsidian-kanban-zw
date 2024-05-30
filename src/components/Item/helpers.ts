@@ -1,17 +1,9 @@
 import { FileWithPath, fromEvent } from 'file-selector';
-import {
-  Platform,
-  TFile,
-  TFolder,
-  htmlToMarkdown,
-  moment,
-  parseLinktext,
-  setIcon,
-} from 'obsidian';
-
+import { Platform, TFile, TFolder, htmlToMarkdown, moment, parseLinktext, setIcon } from 'obsidian';
+import { StateManager } from 'src/StateManager';
 import { Path } from 'src/dnd/types';
 import { buildLinkToDailyNote } from 'src/helpers';
-import { StateManager } from 'src/StateManager';
+import { getTaskStatusDone } from 'src/parsers/helpers/inlineMetadata';
 
 import { BoardModifiers } from '../../helpers/boardModifiers';
 import { getDefaultLocale } from '../Editor/datePickerLocale';
@@ -39,8 +31,7 @@ export function constructDatePicker(
 
           const clickHandler = (e: MouseEvent) => {
             if (
-              e.target instanceof
-                (e.view as Window & typeof globalThis).HTMLElement &&
+              e.target instanceof (e.view as Window & typeof globalThis).HTMLElement &&
               e.target.closest(`.${c('date-picker')}`) === null
             ) {
               selfDestruct();
@@ -113,9 +104,7 @@ export function constructMenuDatePickerOnChange({
   const contentMatch = shouldLinkDates
     ? '(?:\\[[^\\]]+\\]\\([^)]+\\)|\\[\\[[^\\]]+\\]\\])'
     : '{[^}]+}';
-  const dateRegEx = new RegExp(
-    `(^|\\s)${escapeRegExpStr(dateTrigger as string)}${contentMatch}`
-  );
+  const dateRegEx = new RegExp(`(^|\\s)${escapeRegExpStr(dateTrigger as string)}${contentMatch}`);
 
   return (dates: Date[]) => {
     const date = dates[0];
@@ -127,23 +116,12 @@ export function constructMenuDatePickerOnChange({
     let titleRaw = item.data.titleRaw;
 
     if (hasDate) {
-      titleRaw = item.data.titleRaw.replace(
-        dateRegEx,
-        `$1${dateTrigger}${wrappedDate}`
-      );
+      titleRaw = item.data.titleRaw.replace(dateRegEx, `$1${dateTrigger}${wrappedDate}`);
     } else {
       titleRaw = `${item.data.titleRaw} ${dateTrigger}${wrappedDate}`;
     }
 
-    stateManager
-      .updateItemContent(item, titleRaw)
-      .then((item) => {
-        boardModifiers.updateItem(path, item);
-      })
-      .catch((e) => {
-        stateManager.setError(e);
-        console.error(e);
-      });
+    boardModifiers.updateItem(path, stateManager.updateItemContent(item, titleRaw));
   };
 }
 
@@ -172,105 +150,96 @@ export function constructTimePicker(
   const timeFormat = stateManager.getSetting('time-format');
   const selected = time?.format(timeFormat);
 
-  win.document.body.createDiv(
-    { cls: `${pickerClassName} ${c('ignore-click-outside')}` },
-    (div) => {
-      const options = buildTimeArray(stateManager);
+  win.document.body.createDiv({ cls: `${pickerClassName} ${c('ignore-click-outside')}` }, (div) => {
+    const options = buildTimeArray(stateManager);
 
-      const clickHandler = (e: MouseEvent) => {
-        if (
-          e.target instanceof
-            (e.view as Window & typeof globalThis).HTMLElement &&
-          e.target.hasClass(c('time-picker-item')) &&
-          e.target.dataset.value
-        ) {
-          onSelect(e.target.dataset.value);
-          selfDestruct();
-        }
-      };
+    const clickHandler = (e: MouseEvent) => {
+      if (
+        e.target instanceof (e.view as Window & typeof globalThis).HTMLElement &&
+        e.target.hasClass(c('time-picker-item')) &&
+        e.target.dataset.value
+      ) {
+        onSelect(e.target.dataset.value);
+        selfDestruct();
+      }
+    };
 
-      const clickOutsideHandler = (e: MouseEvent) => {
-        if (
-          e.target instanceof
-            (e.view as Window & typeof globalThis).HTMLElement &&
-          e.target.closest(`.${pickerClassName}`) === null
-        ) {
-          selfDestruct();
-        }
-      };
+    const clickOutsideHandler = (e: MouseEvent) => {
+      if (
+        e.target instanceof (e.view as Window & typeof globalThis).HTMLElement &&
+        e.target.closest(`.${pickerClassName}`) === null
+      ) {
+        selfDestruct();
+      }
+    };
 
-      const escHandler = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          selfDestruct();
-        }
-      };
+    const escHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        selfDestruct();
+      }
+    };
 
-      const selfDestruct = () => {
-        div.remove();
-        div.removeEventListener('click', clickHandler);
-        win.document.body.removeEventListener('click', clickOutsideHandler);
-        win.document.removeEventListener('keydown', escHandler);
-      };
+    const selfDestruct = () => {
+      div.remove();
+      div.removeEventListener('click', clickHandler);
+      win.document.body.removeEventListener('click', clickOutsideHandler);
+      win.document.removeEventListener('keydown', escHandler);
+    };
 
-      div.style.left = `${coordinates.x || 0}px`;
-      div.style.top = `${coordinates.y || 0}px`;
+    div.style.left = `${coordinates.x || 0}px`;
+    div.style.top = `${coordinates.y || 0}px`;
 
-      let selectedItem: HTMLDivElement = null;
-      let middleItem: HTMLDivElement = null;
+    let selectedItem: HTMLDivElement = null;
+    let middleItem: HTMLDivElement = null;
 
-      options.forEach((opt, index) => {
-        const isSelected = opt === selected;
-        div.createDiv(
-          {
-            cls: `${c('time-picker-item')} ${isSelected ? 'is-selected' : ''}`,
-            text: opt,
-          },
-          (item) => {
-            item.createEl(
-              'span',
-              { cls: c('time-picker-check'), prepend: true },
-              (span) => {
-                setIcon(span, 'lucide-check');
-              }
-            );
+    options.forEach((opt, index) => {
+      const isSelected = opt === selected;
+      div.createDiv(
+        {
+          cls: `${c('time-picker-item')} ${isSelected ? 'is-selected' : ''}`,
+          text: opt,
+        },
+        (item) => {
+          item.createEl('span', { cls: c('time-picker-check'), prepend: true }, (span) => {
+            setIcon(span, 'lucide-check');
+          });
 
-            if (index % 4 === 0) {
-              item.addClass('is-hour');
-            }
-
-            item.dataset.value = opt;
-
-            if (isSelected) selectedItem = item;
-            if (index === Math.floor(options.length / 2)) {
-              middleItem = item;
-            }
+          if (index % 4 === 0) {
+            item.addClass('is-hour');
           }
-        );
+
+          item.dataset.value = opt;
+
+          if (isSelected) selectedItem = item;
+          if (index === Math.floor(options.length / 2)) {
+            middleItem = item;
+          }
+        }
+      );
+    });
+
+    div.win.setTimeout(() => {
+      const height = div.clientHeight;
+      const width = div.clientWidth;
+
+      if (coordinates.y + height > win.innerHeight) {
+        div.style.top = `${(coordinates.y || 0) - height}px`;
+      }
+
+      if (coordinates.x + width > win.innerWidth) {
+        div.style.left = `${(coordinates.x || 0) - width}px`;
+      }
+
+      (selectedItem || middleItem)?.scrollIntoView({
+        block: 'center',
+        inline: 'nearest',
       });
 
-      div.win.setTimeout(() => {
-        const height = div.clientHeight;
-        const width = div.clientWidth;
-
-        if (coordinates.y + height > win.innerHeight) {
-          div.style.top = `${(coordinates.y || 0) - height}px`;
-        }
-
-        if (coordinates.x + width > win.innerWidth) {
-          div.style.left = `${(coordinates.x || 0) - width}px`;
-        }
-
-        (selectedItem || middleItem)?.scrollIntoView({
-          block: 'center',
-          inline: 'nearest',
-        });
-
-        div.addEventListener('click', clickHandler);
-        win.document.body.addEventListener('click', clickOutsideHandler);
-        win.document.addEventListener('keydown', escHandler);
-      });
-    }
-  );
+      div.addEventListener('click', clickHandler);
+      win.document.body.addEventListener('click', clickOutsideHandler);
+      win.document.addEventListener('keydown', escHandler);
+    });
+  });
 }
 
 interface ConstructMenuTimePickerOnChangeParams {
@@ -289,31 +258,18 @@ export function constructMenuTimePickerOnChange({
   path,
 }: ConstructMenuTimePickerOnChangeParams) {
   const timeTrigger = stateManager.getSetting('time-trigger');
-  const timeRegEx = new RegExp(
-    `(^|\\s)${escapeRegExpStr(timeTrigger as string)}{([^}]+)}`
-  );
+  const timeRegEx = new RegExp(`(^|\\s)${escapeRegExpStr(timeTrigger as string)}{([^}]+)}`);
 
   return (time: string) => {
     let titleRaw = item.data.titleRaw;
 
     if (hasTime) {
-      titleRaw = item.data.titleRaw.replace(
-        timeRegEx,
-        `$1${timeTrigger}{${time}}`
-      );
+      titleRaw = item.data.titleRaw.replace(timeRegEx, `$1${timeTrigger}{${time}}`);
     } else {
       titleRaw = `${item.data.titleRaw} ${timeTrigger}{${time}}`;
     }
 
-    stateManager
-      .updateItemContent(item, titleRaw)
-      .then((item) => {
-        boardModifiers.updateItem(path, item);
-      })
-      .catch((e) => {
-        stateManager.setError(e);
-        console.error(e);
-      });
+    boardModifiers.updateItem(path, stateManager.updateItemContent(item, titleRaw));
   };
 }
 
@@ -335,7 +291,7 @@ export function getItemClassModifiers(item: Item) {
     }
   }
 
-  if (item.data.isComplete) {
+  if (item.data.checked && item.data.checkChar === getTaskStatusDone()) {
     classModifiers.push('is-complete');
   }
 
@@ -353,18 +309,10 @@ export function linkTo(
   subpath?: string
 ) {
   // Generate a link relative to this Kanban board, respecting user link type preferences
-  return stateManager.app.fileManager.generateMarkdownLink(
-    file,
-    sourcePath,
-    subpath
-  );
+  return stateManager.app.fileManager.generateMarkdownLink(file, sourcePath, subpath);
 }
 
-export function getMarkdown(
-  stateManager: StateManager,
-  transfer: DataTransfer,
-  html: string
-) {
+export function getMarkdown(html: string) {
   return htmlToMarkdown(html);
 }
 
@@ -402,9 +350,9 @@ export function getFileListFromClipboard(win: Window & typeof globalThis) {
         };
         return [fileInfo];
       } else {
-        return [
-          (clipboard.read('public.file-url') as string).replace('file://', ''),
-        ].filter((item) => item);
+        return [(clipboard.read('public.file-url') as string).replace('file://', '')].filter(
+          (item) => item
+        );
       }
     }
   } else {
@@ -442,9 +390,10 @@ export function getFileListFromClipboard(win: Window & typeof globalThis) {
         return [fileInfo];
       } else {
         return [
-          (
-            clipboard.readBuffer('FileNameW').toString('ucs2') as string
-          ).replace(RegExp(String.fromCharCode(0), 'g'), ''),
+          (clipboard.readBuffer('FileNameW').toString('ucs2') as string).replace(
+            RegExp(String.fromCharCode(0), 'g'),
+            ''
+          ),
         ].filter((item) => item);
       }
     }
@@ -463,19 +412,18 @@ async function linkFromBuffer(
   ext: string,
   buffer: ArrayBuffer
 ) {
-  const path = (await (
-    stateManager.app.vault as any
-  ).getAvailablePathForAttachments(fileName, ext, stateManager.file)) as string;
+  const path = (await (stateManager.app.vault as any).getAvailablePathForAttachments(
+    fileName,
+    ext,
+    stateManager.file
+  )) as string;
 
   const newFile = await stateManager.app.vault.createBinary(path, buffer);
 
   return linkTo(stateManager, newFile, stateManager.file.path);
 }
 
-async function handleElectronPaste(
-  stateManager: StateManager,
-  win: Window & typeof globalThis
-) {
+async function handleElectronPaste(stateManager: StateManager, win: Window & typeof globalThis) {
   const list = getFileListFromClipboard(win);
 
   if (!list || list.length === 0) return null;
@@ -493,9 +441,7 @@ async function handleElectronPaste(
           const ext = splitFile.pop();
           const fileName = splitFile.join('.');
 
-          const path = (await (
-            stateManager.app.vault as any
-          ).getAvailablePathForAttachments(
+          const path = (await (stateManager.app.vault as any).getAvailablePathForAttachments(
             fileName,
             ext,
             stateManager.file
@@ -508,9 +454,7 @@ async function handleElectronPaste(
           // Wait for Obsidian to update
           await new Promise((resolve) => win.setTimeout(resolve, 50));
 
-          const newFile = stateManager.app.vault.getAbstractFileByPath(
-            path
-          ) as TFile;
+          const newFile = stateManager.app.vault.getAbstractFileByPath(path) as TFile;
 
           return linkTo(stateManager, newFile, stateManager.file.path);
         } else {
@@ -525,11 +469,7 @@ async function handleElectronPaste(
   ).filter((file) => file);
 }
 
-function handleFiles(
-  stateManager: StateManager,
-  files: FileWithPath[],
-  isPaste?: boolean
-) {
+function handleFiles(stateManager: StateManager, files: FileWithPath[], isPaste?: boolean) {
   return Promise.all(
     files.map((file) => {
       const splitFileName = file.name.split('.');
@@ -557,9 +497,7 @@ function handleFiles(
         const reader = new FileReader();
         reader.onload = async (e) => {
           try {
-            const path = (await (
-              stateManager.app.vault as any
-            ).getAvailablePathForAttachments(
+            const path = (await (stateManager.app.vault as any).getAvailablePathForAttachments(
               fileName,
               ext,
               stateManager.file
@@ -587,16 +525,12 @@ async function handleNullDraggable(
   win: Window & typeof globalThis
 ) {
   const isClipboardEvent = (e as DragEvent).view ? false : true;
-  const forcePlaintext = isClipboardEvent
-    ? stateManager.getAView().isShiftPressed
-    : false;
+  const forcePlaintext = isClipboardEvent ? stateManager.getAView().isShiftPressed : false;
   const transfer = isClipboardEvent
     ? (e as ClipboardEvent).clipboardData
     : (e as DragEvent).dataTransfer;
   const clipboard =
-    isClipboardEvent && Platform.isDesktopApp
-      ? win.require('electron').remote.clipboard
-      : null;
+    isClipboardEvent && Platform.isDesktopApp ? win.require('electron').remote.clipboard : null;
   const formats = clipboard ? clipboard.availableFormats() : [];
 
   if (!isClipboardEvent) {
@@ -604,11 +538,7 @@ async function handleNullDraggable(
     if (files.length) {
       return await handleFiles(stateManager, files as FileWithPath[]);
     }
-  } else if (
-    isClipboardEvent &&
-    !forcePlaintext &&
-    !formats.includes('text/rtf')
-  ) {
+  } else if (isClipboardEvent && !forcePlaintext && !formats.includes('text/rtf')) {
     if (Platform.isDesktopApp) {
       const links = await handleElectronPaste(stateManager, win);
 
@@ -636,9 +566,7 @@ async function handleNullDraggable(
   const plain = transfer.getData('text/plain');
   const uris = transfer.getData('text/uri-list');
 
-  const text = forcePlaintext
-    ? plain || html
-    : getMarkdown(stateManager, transfer, html);
+  const text = forcePlaintext ? plain || html : getMarkdown(html);
 
   return [fixLinks(text || uris || plain || html || '').trim()];
 }
@@ -657,9 +585,7 @@ export async function handleDragOrPaste(
     case 'file':
       return [linkTo(stateManager, draggable.file, stateManager.file.path)];
     case 'files':
-      return draggable.files.map((f: TFile) =>
-        linkTo(stateManager, f, stateManager.file.path)
-      );
+      return draggable.files.map((f: TFile) => linkTo(stateManager, f, stateManager.file.path));
     case 'folder': {
       return draggable.file.children
         .map((f: TFile | TFolder) => {
@@ -673,19 +599,11 @@ export async function handleDragOrPaste(
     }
     case 'link': {
       let link = draggable.file
-        ? linkTo(
-            stateManager,
-            draggable.file,
-            parseLinktext(draggable.linktext).subpath
-          )
+        ? linkTo(stateManager, draggable.file, parseLinktext(draggable.linktext).subpath)
         : `[[${draggable.linktext}]]`;
-      const alias = new DOMParser().parseFromString(
-        transfer.getData('text/html'),
-        'text/html'
-      ).documentElement.textContent; // Get raw text
-      link = link
-        .replace(/]]$/, `|${alias}]]`)
-        .replace(/^\[[^\]].+]\(/, `[${alias}](`);
+      const alias = new DOMParser().parseFromString(transfer.getData('text/html'), 'text/html')
+        .documentElement.textContent; // Get raw text
+      link = link.replace(/]]$/, `|${alias}]]`).replace(/^\[[^\]].+]\(/, `[${alias}](`);
       return [link];
     }
     default: {

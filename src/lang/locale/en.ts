@@ -1,20 +1,22 @@
 // English
 
-export default {
+const en = {
   // main.ts
   'Open as kanban board': 'Open as kanban board',
   'Create new board': 'Create new board',
-  'Archive completed cards in active board':
-    'Archive completed cards in active board',
-  'Error: current file is not a Kanban board':
-    'Error: current file is not a Kanban board',
+  'Archive completed cards in active board': 'Archive completed cards in active board',
+  'Error: current file is not a Kanban board': 'Error: current file is not a Kanban board',
   'Convert empty note to Kanban': 'Convert empty note to Kanban',
   'Error: cannot create Kanban, the current note is not empty':
     'Error: cannot create Kanban, the current note is not empty',
   'New kanban board': 'New kanban board',
   'Untitled Kanban': 'Untitled Kanban',
-  'Toggle between Kanban and markdown mode':
-    'Toggle between Kanban and markdown mode',
+  'Toggle between Kanban and markdown mode': 'Toggle between Kanban and markdown mode',
+
+  'View as board': 'View as board',
+  'View as list': 'View as list',
+  'View as table': 'View as table',
+  'Board view': 'Board view',
 
   // KanbanView.tsx
   'Open as markdown': 'Open as markdown',
@@ -31,8 +33,7 @@ export default {
   Archive: 'Archive',
   'Invalid Kanban file: problems parsing frontmatter':
     'Invalid Kanban file: problems parsing frontmatter',
-  "I don't know how to interpret this line:":
-    "I don't know how to interpret this line:",
+  "I don't know how to interpret this line:": "I don't know how to interpret this line:",
   Untitled: 'Untitled', // auto-created column
 
   // settingHelpers.ts
@@ -66,6 +67,7 @@ export default {
     'Notes created from Kanban cards will be placed in this folder. If blank, they will be placed in the default location for this vault.',
   'Default folder': 'Default folder',
   'List width': 'List width',
+  'Expand lists to full width in list view': 'Expand lists to full width in list view',
   'Enter a number to set the list width in pixels.':
     'Enter a number to set the list width in pixels.',
   'Maximum number of archived cards': 'Maximum number of archived cards',
@@ -93,25 +95,35 @@ export default {
   'This format will be used when displaying dates in Kanban cards.':
     'This format will be used when displaying dates in Kanban cards.',
   'Show relative date': 'Show relative date',
-  "When toggled, cards will display the distance between today and the card's date. eg. 'In 3 days', 'A month ago'":
-    "When toggled, cards will display the distance between today and the card's date. eg. 'In 3 days', 'A month ago'",
-  'Hide card display dates': 'Hide card display dates',
+  "When toggled, cards will display the distance between today and the card's date. eg. 'In 3 days', 'A month ago'. Relative dates will not be shown for dates from the Tasks and Dataview plugins.":
+    "When toggled, cards will display the distance between today and the card's date. eg. 'In 3 days', 'A month ago'. Relative dates will not be shown for dates from the Tasks and Dataview plugins.",
+
+  'Move dates to card footer': 'Move dates to card footer',
+  "When toggled, dates will be displayed in the card's footer instead of the card's body.":
+    "When toggled, dates will be displayed in the card's footer instead of the card's body.",
+  'Move tags to card footer': 'Move tags to card footer',
+  "When toggled, tags will be displayed in the card's footer instead of the card's body.":
+    "When toggled, tags will be displayed in the card's footer instead of the card's body.",
+  'Move task data to card footer': 'Move task data to card footer',
+  "When toggled, task data (from the Tasks plugin) will be displayed in the card's footer instead of the card's body.":
+    "When toggled, task data (from the Tasks plugin) will be displayed in the card's footer instead of the card's body.",
+  'Inline metadata position': 'Inline metadata position',
+  'Controls where the inline metadata (from the Dataview plugin) will be displayed.':
+    'Controls where the inline metadata (from the Dataview plugin) will be displayed.',
+  'Card body': 'Card body',
+  'Card footer': 'Card footer',
+  'Merge with linked page metadata': 'Merge with linked page metadata',
+
   'Hide card counts in list titles': 'Hide card counts in list titles',
   'When toggled, card counts are hidden from the list title':
     'When toggled, card counts are hidden from the list title',
-  'When toggled, formatted dates will not be displayed on the card. Relative dates will still be displayed if they are enabled.':
-    'When toggled, formatted dates will not be displayed on the card. Relative dates will still be displayed if they are enabled.',
-  'Hide dates in card titles': 'Hide dates in card titles',
-  'When toggled, dates will be hidden card titles. This will prevent dates from being included in the title when creating new notes.':
-    'When toggled, dates will be hidden card titles. This will prevent dates from being included in the title when creating new notes.',
   'Link dates to daily notes': 'Link dates to daily notes',
   'When toggled, dates will link to daily notes. Eg. [[2021-04-26]]':
     'When toggled, dates will link to daily notes. Eg. [[2021-04-26]]',
   'Add date and time to archived cards': 'Add date and time to archived cards',
   'When toggled, the current date and time will be added to the card title when it is archived. Eg. - [ ] 2021-05-14 10:00am My card title':
     'When toggled, the current date and time will be added to the card title when it is archived. Eg. - [ ] 2021-05-14 10:00am My card title',
-  'Add archive date/time after card title':
-    'Add archive date/time after card title',
+  'Add archive date/time after card title': 'Add archive date/time after card title',
   'When toggled, the archived date/time will be added after the card title, e.g.- [ ] My card title 2021-05-14 10:00am. By default, it is inserted before the title.':
     'When toggled, the archived date/time will be added after the card title, e.g.- [ ] My card title 2021-05-14 10:00am. By default, it is inserted before the title.',
   'Archive date/time separator': 'Archive date/time separator',
@@ -119,16 +131,15 @@ export default {
     'This will be used to separate the archived date/time from the title',
   'Archive date/time format': 'Archive date/time format',
   'Kanban Plugin': 'Kanban Plugin',
-  'Hide tags in card titles': 'Hide tags in card titles',
-  'When toggled, tags will be hidden card titles. This will prevent tags from being included in the title when creating new notes.':
-    'When toggled, tags will be hidden card titles. This will prevent tags from being included in the title when creating new notes.',
-  'Hide card display tags': 'Hide card display tags',
-  'When toggled, tags will not be displayed below the card title.':
-    'When toggled, tags will not be displayed below the card title.',
-  'Display tag colors': 'Display tag colors',
-  'Set colors for the tags displayed below the card title.':
-    'Set colors for the tags displayed below the card title.',
+  'Tag click action': 'Tag click action',
+  'Search Kanban Board': 'Search Kanban Board',
+  'Search Obsidian Vault': 'Search Obsidian Vault',
+  'This setting controls whether clicking the tags displayed below the card title opens the Obsidian search or the Kanban board search.':
+    'This setting controls whether clicking the tags displayed below the card title opens the Obsidian search or the Kanban board search.',
+  'Tag colors': 'Tag colors',
+  'Set colors for tags displayed in cards.': 'Set colors for tags displayed in cards.',
   'Linked Page Metadata': 'Linked Page Metadata',
+  'Inline Metadata': 'Inline Metadata',
   'Display metadata for the first note linked within a card. Specify which metadata keys to display below. An optional label can be provided, and labels can be hidden altogether.':
     'Display metadata for the first note linked within a card. Specify which metadata keys to display below. An optional label can be provided, and labels can be hidden altogether.',
   'Board Header Buttons': 'Board Header Buttons',
@@ -151,8 +162,8 @@ export default {
   'Before now': 'Before now',
   'Between now and': 'Between now and',
   'Display date colors': 'Display date colors',
-  'Set colors for the date displayed below the card based on the rules below':
-    'Set colors for the date displayed below the card based on the rules below',
+  'Set colors for dates displayed in cards based on the rules below.':
+    'Set colors for dates displayed in cards based on the rules below.',
   'Add date color': 'Add date color',
 
   // MetadataSettings.tsx
@@ -162,14 +173,36 @@ export default {
   'Drag to rearrange': 'Drag to rearrange',
   Delete: 'Delete',
   'Add key': 'Add key',
+  'Add tag': 'Add tag',
   'Field contains markdown': 'Field contains markdown',
+  'Tag sort order': 'Tag sort order',
+  'Set an explicit sort order for the specified tags.':
+    'Set an explicit sort order for the specified tags.',
 
   // TagColorSettings.tsx
   'Add tag color': 'Add tag color',
 
+  // components/Table.tsx
+  List: 'List',
+  Card: 'Card',
+  Date: 'Date',
+  Tags: 'Tags',
+
+  Priority: 'Priority',
+  Start: 'Start',
+  Created: 'Created',
+  Scheduled: 'Scheduled',
+  Due: 'Due',
+  Cancelled: 'Cancelled',
+  Recurrence: 'Recurrence',
+  'Depends on': 'Depends on',
+  ID: 'ID',
+
   // components/Item/Item.tsx
   'More options': 'More options',
   Cancel: 'Cancel',
+  Done: 'Done',
+  Save: 'Save',
 
   // components/Item/ItemContent.tsx
   today: 'today',
@@ -202,6 +235,7 @@ export default {
   'Add label': 'Add label',
   'Move to top': 'Move to top',
   'Move to bottom': 'Move to bottom',
+  'Move to list': 'Move to list',
 
   // components/Lane/LaneForm.tsx
   'Enter list title...': 'Enter list title...',
@@ -232,6 +266,8 @@ export default {
   'Insert list after': 'Insert list after',
   'Sort by card text': 'Sort by card text',
   'Sort by date': 'Sort by date',
+  'Sort by tags': 'Sort by tags',
+  'Sort by': 'Sort by',
 
   // components/helpers/renderMarkdown.ts
   'Unable to find': 'Unable to find',
@@ -245,3 +281,6 @@ export default {
   'disable create new file from link': 'disable create new file from link',
   'show markdown like by alias': 'show markdown like by alias',
 };
+
+export type Lang = typeof en;
+export default en;

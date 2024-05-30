@@ -29,10 +29,7 @@ export function buildUpdateMutation(path: Path, mutation: Spec<Nestable>) {
   return pathedMutation;
 }
 
-export function buildUpdateParentMutation(
-  path: Path,
-  mutation: Spec<Nestable>
-) {
+export function buildUpdateParentMutation(path: Path, mutation: Spec<Nestable>) {
   let pathedMutation: Spec<Nestable> = mutation;
 
   for (let i = path.length - 2; i >= 0; i--) {
@@ -46,10 +43,11 @@ export function buildUpdateParentMutation(
   return pathedMutation;
 }
 
-export function buildRemoveMutation(path: Path) {
+export function buildRemoveMutation(path: Path, replacement?: Nestable) {
+  const val: Spec<any, any> = replacement ? [path.last(), 1, replacement] : [path.last(), 1];
   return buildUpdateParentMutation(path, {
     children: {
-      $splice: [[path[path.length - 1], 1]],
+      $splice: [val],
     },
   });
 }
@@ -61,13 +59,7 @@ export function buildInsertMutation(
 ) {
   return buildUpdateParentMutation(destination, {
     children: {
-      $splice: [
-        [
-          destination[destination.length - 1] + destinationModifier,
-          0,
-          ...entities,
-        ],
-      ],
+      $splice: [[destination.last() + destinationModifier, 0, ...entities]],
     },
   });
 }
@@ -92,20 +84,21 @@ export function moveEntity(
   root: Nestable,
   source: Path,
   destination: Path,
-  transform?: (entity: Nestable) => Nestable
+  transform?: (entity: Nestable) => Nestable | Nestable[],
+  replace?: (entity: Nestable) => Nestable
 ) {
   const entity = transform
     ? transform(getEntityFromPath(root, source))
     : getEntityFromPath(root, source);
   const siblingDirection = getSiblingDirection(source, destination);
 
-  const destinationModifier =
-    siblingDirection === SiblingDirection.After ? -1 : 0;
+  const destinationModifier = siblingDirection === SiblingDirection.After ? -1 : 0;
 
-  const removeMutation = buildRemoveMutation(source);
+  const replacement = replace?.(getEntityFromPath(root, source));
+  const removeMutation = buildRemoveMutation(source, replacement);
   const insertMutation = buildInsertMutation(
     destination,
-    [entity],
+    Array.isArray(entity) ? entity : [entity],
     destinationModifier
   );
 
@@ -120,46 +113,26 @@ export function moveEntity(
   return newBoard;
 }
 
-export function removeEntity(root: Nestable, target: Path) {
-  return update(root, buildRemoveMutation(target));
+export function removeEntity(root: Nestable, target: Path, replacement?: Nestable) {
+  return update(root, buildRemoveMutation(target, replacement));
 }
 
-export function insertEntity(
-  root: Nestable,
-  destination: Path,
-  entities: Nestable[]
-) {
+export function insertEntity(root: Nestable, destination: Path, entities: Nestable[]) {
   return update(root, buildInsertMutation(destination, entities));
 }
 
-export function appendEntities(
-  root: Nestable,
-  destination: Path,
-  entities: Nestable[]
-) {
+export function appendEntities(root: Nestable, destination: Path, entities: Nestable[]) {
   return update(root, buildAppendMutation(destination, entities));
 }
 
-export function prependEntities(
-  root: Nestable,
-  destination: Path,
-  entities: Nestable[]
-) {
+export function prependEntities(root: Nestable, destination: Path, entities: Nestable[]) {
   return update(root, buildPrependMutation(destination, entities));
 }
 
-export function updateEntity(
-  root: Nestable,
-  path: Path,
-  mutation: Spec<Nestable>
-) {
+export function updateEntity(root: Nestable, path: Path, mutation: Spec<Nestable>) {
   return update(root, buildUpdateMutation(path, mutation));
 }
 
-export function updateParentEntity(
-  root: Nestable,
-  path: Path,
-  mutation: Spec<Nestable>
-) {
+export function updateParentEntity(root: Nestable, path: Path, mutation: Spec<Nestable>) {
   return update(root, buildUpdateParentMutation(path, mutation));
 }

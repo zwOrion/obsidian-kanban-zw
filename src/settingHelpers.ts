@@ -2,12 +2,13 @@ import Choices, { Choices as IChoices } from 'choices.js';
 import update from 'immutability-helper';
 import { App, Setting, TFile, TFolder, Vault } from 'obsidian';
 
+import { KanbanSettings, SettingsManager } from './Settings';
 import { getTemplatePlugins } from './components/helpers';
 import { t } from './lang/helpers';
-import { KanbanSettings, SettingsManager } from './Settings';
 
 export const defaultDateTrigger = '@';
 export const defaultTimeTrigger = '@@';
+export const defaultMetadataPosition = 'body';
 
 export function getFolderChoices(app: App) {
   const folderList: IChoices.Choice[] = [];
@@ -50,8 +51,7 @@ export function getTemplateChoices(app: App, folderStr?: string) {
 }
 
 export function getListOptions(app: App) {
-  const { templateFolder, templatesEnabled, templaterPlugin } =
-    getTemplatePlugins(app);
+  const { templateFolder, templatesEnabled, templaterPlugin } = getTemplatePlugins(app);
 
   const templateFiles = getTemplateChoices(app, templateFolder);
   const vaultFolders = getFolderChoices(app);
@@ -92,29 +92,36 @@ export function createSearchSelect({
       el.win.setTimeout(() => {
         let list = choices;
 
-        const [value, defaultVal] = manager.getSetting(key, local);
+        const [value, globalValue] = manager.getSetting(key, local);
 
-        if (defaultVal) {
-          const index = choices.findIndex((f) => f.value === defaultVal);
-          const choice = choices[index];
+        let didSetPlaceholder = false;
+        if (globalValue) {
+          const index = list.findIndex((f) => f.value === globalValue);
 
-          list = update(list, {
-            $splice: [[index, 1]],
-            $unshift: [
-              update(choice, {
-                placeholder: {
-                  $set: true,
-                },
-                value: {
-                  $set: '',
-                },
-                label: {
-                  $apply: (v) => `${v} (${t('default')})`,
-                },
-              }),
-            ],
-          });
-        } else {
+          if (index > -1) {
+            didSetPlaceholder = true;
+            const choice = choices[index];
+
+            list = update(list, {
+              $splice: [[index, 1]],
+              $unshift: [
+                update(choice, {
+                  placeholder: {
+                    $set: true,
+                  },
+                  value: {
+                    $set: '',
+                  },
+                  label: {
+                    $apply: (v) => `${v} (${t('default')})`,
+                  },
+                }),
+              ],
+            });
+          }
+        }
+
+        if (!didSetPlaceholder) {
           list = update(list, {
             $unshift: [
               {
@@ -136,7 +143,7 @@ export function createSearchSelect({
           choices: list,
         }).setChoiceByValue('');
 
-        if (value && typeof value === 'string') {
+        if (value && typeof value === 'string' && list.findIndex((f) => f.value === value) > -1) {
           c.setChoiceByValue(value);
         }
 

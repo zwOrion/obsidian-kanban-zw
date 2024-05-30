@@ -1,9 +1,10 @@
-import { compare } from 'fast-json-patch';
-import { JSONPatchDocument, immutableJSONPatch } from 'immutable-json-patch';
-
-import { Board, Item } from 'src/components/types';
+import { isPlainObject } from 'is-plain-object';
+import { TFile } from 'obsidian';
+import { getAPI } from 'obsidian-dataview';
 import { StateManager } from 'src/StateManager';
+import { Board, Item } from 'src/components/types';
 
+import { diff, diffApply } from '../helpers/patch';
 import { BaseFormat } from './common';
 import {
   astToUnhydratedBoard,
@@ -15,6 +16,15 @@ import {
 import { hydrateBoard, hydratePostOp } from './helpers/hydrateBoard';
 import { parseMarkdown } from './parseMarkdown';
 
+const generatedKeys: Array<string | number> = [
+  'id',
+  'date',
+  'time',
+  'titleSearch',
+  'titleSearchRaw',
+  'file',
+];
+
 export class ListFormat implements BaseFormat {
   stateManager: StateManager;
 
@@ -22,8 +32,8 @@ export class ListFormat implements BaseFormat {
     this.stateManager = stateManager;
   }
 
-  newItem(content: string, isComplete?: boolean, forceEdit?: boolean) {
-    return newItem(this.stateManager, content, isComplete, forceEdit);
+  newItem(content: string, checkChar: string, forceEdit?: boolean) {
+    return newItem(this.stateManager, content, checkChar, forceEdit);
   }
 
   updateItemContent(item: Item, content: string) {
@@ -36,28 +46,29 @@ export class ListFormat implements BaseFormat {
 
   mdToBoard(md: string) {
     const { ast, settings, frontmatter } = parseMarkdown(this.stateManager, md);
-    const newBoard = astToUnhydratedBoard(
-      this.stateManager,
-      settings,
-      frontmatter,
-      ast,
-      md
-    );
+    const newBoard = astToUnhydratedBoard(this.stateManager, settings, frontmatter, ast, md);
+    const { state } = this.stateManager;
+    const dv = getAPI();
 
-    if (!this.stateManager.hasError() && this.stateManager.state) {
-      const ops = compare(this.stateManager.state, newBoard);
-      const filtered = ops.filter((op) =>
-        ['/id', '/dom', '/date', '/time', '/titleSearch', '/file'].every(
-          (postFix) => !op.path.endsWith(postFix)
-        )
+    if (!this.stateManager.hasError() && state) {
+      const ops = diff(
+        state,
+        newBoard,
+        (path) => {
+          return generatedKeys.includes(path.last());
+        },
+        (val: any) => {
+          if (!val) return String(val);
+          if (val instanceof TFile) return val.path;
+          if (isPlainObject(val) || Array.isArray(val)) return String(val);
+          if (dv && !dv.value.isObject(val)) return dv.value.toString(val);
+          return String(val);
+        }
       );
 
-      const patchedBoard = immutableJSONPatch(
-        this.stateManager.state,
-        filtered as JSONPatchDocument
-      ) as Board;
+      const patchedBoard = diffApply(state, ops) as Board;
 
-      return hydratePostOp(this.stateManager, patchedBoard, filtered);
+      return hydratePostOp(this.stateManager, patchedBoard, ops);
     }
 
     return hydrateBoard(this.stateManager, newBoard);

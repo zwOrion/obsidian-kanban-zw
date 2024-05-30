@@ -1,12 +1,14 @@
 import update, { Spec } from 'immutability-helper';
 import {
   App,
+  DropdownComponent,
   Modal,
   PluginSettingTab,
   Setting,
   ToggleComponent,
 } from 'obsidian';
 
+import { KanbanView } from './KanbanView';
 import {
   c,
   generateInstanceId,
@@ -15,124 +17,134 @@ import {
 } from './components/helpers';
 import {
   DataKey,
-  DateColorKey,
+  DateColor,
   DateColorSetting,
   DateColorSettingTemplate,
   MetadataSetting,
   MetadataSettingTemplate,
-  TagColorKey,
+  TagColor,
   TagColorSetting,
   TagColorSettingTemplate,
+  TagSort,
+  TagSortSetting,
+  TagSortSettingTemplate,
 } from './components/types';
 import { getParentWindow } from './dnd/util/getWindow';
-import { KanbanView } from './KanbanView';
 import { t } from './lang/helpers';
 import KanbanPlugin from './main';
-import { frontMatterKey } from './parsers/common';
+import { frontmatterKey } from './parsers/common';
 import {
   createSearchSelect,
   defaultDateTrigger,
+  defaultMetadataPosition,
   defaultTimeTrigger,
   getListOptions,
 } from './settingHelpers';
-import {
-  cleanupMetadataSettings,
-  renderMetadataSettings,
-} from './settings/MetadataSettings';
-import {
-  cleanUpTagSettings,
-  renderTagSettings,
-} from './settings/TagColorSettings';
-import {
-  cleanUpDateSettings,
-  renderDateSettings,
-} from './settings/DateColorSettings';
+import { cleanUpDateSettings, renderDateSettings } from './settings/DateColorSettings';
+import { cleanupMetadataSettings, renderMetadataSettings } from './settings/MetadataSettings';
+import { cleanUpTagSettings, renderTagSettings } from './settings/TagColorSettings';
+import { cleanUpTagSortSettings, renderTagSortSettings } from './settings/TagSortSettings';
 
 const numberRegEx = /^\d+(?:\.\d+)?$/;
 
-export type KanbanFormats = 'basic';
+export type KanbanFormat = 'basic' | 'board' | 'table' | 'list';
 
 export interface KanbanSettings {
-  [frontMatterKey]?: KanbanFormats;
+  [frontmatterKey]?: KanbanFormat;
+  'append-archive-date'?: boolean;
+  'archive-date-format'?: string;
+  'archive-date-separator'?: string;
+  'archive-with-date'?: boolean;
+  'date-colors'?: DateColor[];
   'date-display-format'?: string;
   'date-format'?: string;
   'date-picker-week-start'?: number;
   'date-time-display-format'?: string;
   'date-trigger'?: string;
+  'full-list-lane-width'?: boolean;
   'hide-card-count'?: boolean;
-  'hide-date-display'?: boolean;
-  'hide-date-in-title'?: boolean;
-  'hide-tags-display'?: boolean;
-  'hide-tags-in-title'?: boolean;
+  'inline-metadata-position'?: 'body' | 'footer' | 'metadata-table';
   'lane-width'?: number;
   'link-date-to-daily-note'?: boolean;
+  'list-collapse'?: boolean[];
   'max-archive-size'?: number;
   'metadata-keys'?: DataKey[];
+  'move-dates'?: boolean;
+  'move-tags'?: boolean;
+  'move-task-metadata'?: boolean;
   'new-card-insertion-method'?: 'prepend' | 'prepend-compact' | 'append';
   'new-line-trigger'?: 'enter' | 'shift-enter';
   'new-note-folder'?: string;
   'new-note-template'?: string;
-  'archive-with-date'?: boolean;
-  'append-archive-date'?: boolean;
-  'archive-date-format'?: string;
-  'archive-date-separator'?: string;
+  'show-add-list'?: boolean;
+  'show-archive-all'?: boolean;
+  'show-board-settings'?: boolean;
   'show-checkboxes'?: boolean;
   'show-relative-date'?: boolean;
+  'show-search'?: boolean;
+  'show-set-view'?: boolean;
+  'show-view-as-markdown'?: boolean;
+  'table-sizing'?: Record<string, number>;
+  'tag-action'?: 'kanban' | 'obsidian';
+  'tag-colors'?: TagColor[];
+  'tag-sort'?: TagSort[];
   'time-format'?: string;
   'time-trigger'?: string;
-
-  'show-add-list'?: boolean;
-  'show-add-unit'?: boolean;
-  'show-archive-all'?: boolean;
-  'show-view-as-markdown'?: boolean;
-  'disable-create-new-file-from-link'?: boolean;
-  'show-markdown-like-by-alias'?: boolean;
-  'show-board-settings'?: boolean;
-  'show-search'?: boolean;
-
-  'tag-colors'?: TagColorKey[];
-  'date-colors'?: DateColorKey[];
+    'show-add-unit'?: boolean;
+    'disable-create-new-file-from-link'?: boolean;
+    'show-markdown-like-by-alias'?: boolean;
 }
 
-export const settingKeyLookup: Record<keyof KanbanSettings, true> = {
-  [frontMatterKey]: true,
-  'date-display-format': true,
-  'date-format': true,
-  'date-picker-week-start': true,
-  'date-time-display-format': true,
-  'date-trigger': true,
-  'hide-card-count': true,
-  'hide-date-display': true,
-  'hide-date-in-title': true,
-  'hide-tags-display': true,
-  'hide-tags-in-title': true,
-  'lane-width': true,
-  'link-date-to-daily-note': true,
-  'max-archive-size': true,
-  'metadata-keys': true,
-  'new-card-insertion-method': true,
-  'new-line-trigger': true,
-  'new-note-folder': true,
-  'new-note-template': true,
-  'archive-with-date': true,
-  'append-archive-date': true,
-  'archive-date-format': true,
-  'archive-date-separator': true,
-  'show-checkboxes': true,
-  'show-relative-date': true,
-  'time-format': true,
-  'time-trigger': true,
-  'show-add-list': true,
-  'show-add-unit': true,
-  'show-archive-all': true,
-  'show-view-as-markdown': true,
-  'disable-create-new-file-from-link': true,
-  'show-markdown-like-by-alias': true,
-  'show-board-settings': true,
-  'show-search': true,
-  'tag-colors': true,
-  'date-colors': true,
-};
+export interface KanbanViewSettings {
+  [frontmatterKey]?: KanbanFormat;
+  'list-collapse'?: boolean[];
+}
+
+export const settingKeyLookup: Set<keyof KanbanSettings> = new Set([
+  frontmatterKey,
+  'append-archive-date',
+  'archive-date-format',
+  'archive-date-separator',
+  'archive-with-date',
+  'date-colors',
+  'date-display-format',
+  'date-format',
+  'date-picker-week-start',
+  'date-time-display-format',
+  'date-trigger',
+  'full-list-lane-width',
+  'hide-card-count',
+  'inline-metadata-position',
+  'lane-width',
+  'link-date-to-daily-note',
+  'list-collapse',
+  'max-archive-size',
+  'metadata-keys',
+  'move-dates',
+  'move-tags',
+  'move-task-metadata',
+  'new-card-insertion-method',
+  'new-line-trigger',
+  'new-note-folder',
+  'new-note-template',
+  'show-add-list',
+  'show-archive-all',
+  'show-board-settings',
+  'show-checkboxes',
+  'show-relative-date',
+  'show-search',
+  'show-set-view',
+  'show-view-as-markdown',
+  'table-sizing',
+  'tag-action',
+  'tag-colors',
+  'tag-sort',
+  'time-format',
+  'time-trigger',
+    'show-add-unit',
+    'disable-create-new-file-from-link',
+    'show-markdown-like-by-alias'
+]);
 
 export type SettingRetriever = <K extends keyof KanbanSettings>(
   key: K,
@@ -158,11 +170,7 @@ export class SettingsManager {
   cleanupFns: Array<() => void> = [];
   applyDebounceTimer: number = 0;
 
-  constructor(
-    plugin: KanbanPlugin,
-    config: SettingsManagerConfig,
-    settings: KanbanSettings
-  ) {
+  constructor(plugin: KanbanPlugin, config: SettingsManagerConfig, settings: KanbanSettings) {
     this.app = plugin.app;
     this.plugin = plugin;
     this.config = config;
@@ -175,7 +183,7 @@ export class SettingsManager {
     this.applyDebounceTimer = this.win.setTimeout(() => {
       this.settings = update(this.settings, spec);
       this.config.onSettingsChange(this.settings);
-    }, 200);
+    }, 1000);
   }
 
   getSetting(key: keyof KanbanSettings, local: boolean) {
@@ -189,17 +197,13 @@ export class SettingsManager {
   constructUI(contentEl: HTMLElement, heading: string, local: boolean) {
     this.win = contentEl.win;
 
-    const { templateFiles, vaultFolders, templateWarning } = getListOptions(
-      this.app
-    );
+    const { templateFiles, vaultFolders, templateWarning } = getListOptions(this.app);
 
     contentEl.createEl('h3', { text: heading });
 
     if (local) {
       contentEl.createEl('p', {
-        text: t(
-          'These settings will take precedence over the default Kanban board settings.'
-        ),
+        text: t('These settings will take precedence over the default Kanban board settings.'),
       });
     } else {
       contentEl.createEl('p', {
@@ -208,6 +212,46 @@ export class SettingsManager {
         ),
       });
     }
+
+    new Setting(contentEl)
+      .setName(t('Display card checkbox'))
+      .setDesc(t('When toggled, a checkbox will be displayed with each card'))
+      .then((setting) => {
+        let toggleComponent: ToggleComponent;
+
+        setting
+          .addToggle((toggle) => {
+            toggleComponent = toggle;
+
+            const [value, globalValue] = this.getSetting('show-checkboxes', local);
+
+            if (value !== undefined) {
+              toggle.setValue(value as boolean);
+            } else if (globalValue !== undefined) {
+              toggle.setValue(globalValue as boolean);
+            }
+
+            toggle.onChange((newValue) => {
+              this.applySettingsUpdate({
+                'show-checkboxes': {
+                  $set: newValue,
+                },
+              });
+            });
+          })
+          .addExtraButton((b) => {
+            b.setIcon('lucide-rotate-ccw')
+              .setTooltip(t('Reset to default'))
+              .onClick(() => {
+                const [, globalValue] = this.getSetting('show-checkboxes', local);
+                toggleComponent.setValue(!!globalValue);
+
+                this.applySettingsUpdate({
+                  $unset: ['show-checkboxes'],
+                });
+              });
+          });
+      });
 
     new Setting(contentEl)
       .setName(t('New line trigger'))
@@ -222,9 +266,7 @@ export class SettingsManager {
 
         const [value, globalValue] = this.getSetting('new-line-trigger', local);
 
-        dropdown.setValue(
-          (value as string) || (globalValue as string) || 'shift-enter'
-        );
+        dropdown.setValue((value as string) || (globalValue as string) || 'shift-enter');
         dropdown.onChange((value) => {
           this.applySettingsUpdate({
             'new-line-trigger': {
@@ -237,23 +279,16 @@ export class SettingsManager {
     new Setting(contentEl)
       .setName(t('Prepend / append new cards'))
       .setDesc(
-        t(
-          'This setting controls whether new cards are added to the beginning or end of the list.'
-        )
+        t('This setting controls whether new cards are added to the beginning or end of the list.')
       )
       .addDropdown((dropdown) => {
         dropdown.addOption('prepend', t('Prepend'));
         dropdown.addOption('prepend-compact', t('Prepend (compact)'));
         dropdown.addOption('append', t('Append'));
 
-        const [value, globalValue] = this.getSetting(
-          'new-card-insertion-method',
-          local
-        );
+        const [value, globalValue] = this.getSetting('new-card-insertion-method', local);
 
-        dropdown.setValue(
-          (value as string) || (globalValue as string) || 'append'
-        );
+        dropdown.setValue((value as string) || (globalValue as string) || 'append');
         dropdown.onChange((value) => {
           this.applySettingsUpdate({
             'new-card-insertion-method': {
@@ -264,12 +299,155 @@ export class SettingsManager {
       });
 
     new Setting(contentEl)
-      .setName(t('Note template'))
+      .setName(t('Hide card counts in list titles'))
+      .setDesc(t('When toggled, card counts are hidden from the list title'))
+      .then((setting) => {
+        let toggleComponent: ToggleComponent;
+
+        setting
+          .addToggle((toggle) => {
+            toggleComponent = toggle;
+
+            const [value, globalValue] = this.getSetting('hide-card-count', local);
+
+            if (value !== undefined) {
+              toggle.setValue(value as boolean);
+            } else if (globalValue !== undefined) {
+              toggle.setValue(globalValue as boolean);
+            }
+
+            toggle.onChange((newValue) => {
+              this.applySettingsUpdate({
+                'hide-card-count': {
+                  $set: newValue,
+                },
+              });
+            });
+          })
+          .addExtraButton((b) => {
+            b.setIcon('lucide-rotate-ccw')
+              .setTooltip(t('Reset to default'))
+              .onClick(() => {
+                const [, globalValue] = this.getSetting('hide-card-count', local);
+                toggleComponent.setValue(!!globalValue);
+
+                this.applySettingsUpdate({
+                  $unset: ['hide-card-count'],
+                });
+              });
+          });
+      });
+
+    new Setting(contentEl)
+      .setName(t('List width'))
+      .setDesc(t('Enter a number to set the list width in pixels.'))
+      .addText((text) => {
+        const [value, globalValue] = this.getSetting('lane-width', local);
+
+        text.inputEl.setAttr('type', 'number');
+        text.inputEl.placeholder = `${globalValue ? globalValue : '272'} (default)`;
+        text.inputEl.value = value ? value.toString() : '';
+
+        text.onChange((val) => {
+          if (val && numberRegEx.test(val)) {
+            text.inputEl.removeClass('error');
+
+            this.applySettingsUpdate({
+              'lane-width': {
+                $set: parseInt(val),
+              },
+            });
+
+            return;
+          }
+
+          if (val) {
+            text.inputEl.addClass('error');
+          }
+
+          this.applySettingsUpdate({
+            $unset: ['lane-width'],
+          });
+        });
+      });
+
+    new Setting(contentEl).setName(t('Expand lists to full width in list view')).then((setting) => {
+      let toggleComponent: ToggleComponent;
+
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
+
+          const [value, globalValue] = this.getSetting('full-list-lane-width', local);
+
+          if (value !== undefined) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined) {
+            toggle.setValue(globalValue as boolean);
+          }
+
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'full-list-lane-width': {
+                $set: newValue,
+              },
+            });
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('full-list-lane-width', local);
+              toggleComponent.setValue(!!globalValue);
+
+              this.applySettingsUpdate({
+                $unset: ['full-list-lane-width'],
+              });
+            });
+        });
+    });
+
+    new Setting(contentEl)
+      .setName(t('Maximum number of archived cards'))
       .setDesc(
         t(
-          'This template will be used when creating new notes from Kanban cards.'
+          "Archived cards can be viewed in markdown mode. This setting will begin removing old cards once the limit is reached. Setting this value to -1 will allow a board's archive to grow infinitely."
         )
       )
+      .addText((text) => {
+        const [value, globalValue] = this.getSetting('max-archive-size', local);
+
+        text.inputEl.setAttr('type', 'number');
+        text.inputEl.placeholder = `${globalValue ? globalValue : '-1'} (default)`;
+        text.inputEl.value = value ? value.toString() : '';
+
+        text.onChange((val) => {
+          if (val && numberRegEx.test(val)) {
+            text.inputEl.removeClass('error');
+
+            this.applySettingsUpdate({
+              'max-archive-size': {
+                $set: parseInt(val),
+              },
+            });
+
+            return;
+          }
+
+          if (val) {
+            text.inputEl.addClass('error');
+          }
+
+          this.applySettingsUpdate({
+            $unset: ['max-archive-size'],
+          });
+        });
+      });
+
+    new Setting(contentEl)
+      .setName(t('Note template'))
+      .setDesc(t('This template will be used when creating new notes from Kanban cards.'))
       .then(
         createSearchSelect({
           choices: templateFiles,
@@ -298,9 +476,13 @@ export class SettingsManager {
         })
       );
 
+    contentEl.createEl('h4', { text: t('Tags') });
+
     new Setting(contentEl)
-      .setName(t('Hide card counts in list titles'))
-      .setDesc(t('When toggled, card counts are hidden from the list title'))
+      .setName(t('Move tags to card footer'))
+      .setDesc(
+        t("When toggled, tags will be displayed in the card's footer instead of the card's body.")
+      )
       .then((setting) => {
         let toggleComponent: ToggleComponent;
 
@@ -308,10 +490,7 @@ export class SettingsManager {
           .addToggle((toggle) => {
             toggleComponent = toggle;
 
-            const [value, globalValue] = this.getSetting(
-              'hide-card-count',
-              local
-            );
+            const [value, globalValue] = this.getSetting('move-tags', local);
 
             if (value !== undefined) {
               toggle.setValue(value as boolean);
@@ -321,7 +500,7 @@ export class SettingsManager {
 
             toggle.onChange((newValue) => {
               this.applySettingsUpdate({
-                'hide-card-count': {
+                'move-tags': {
                   $set: newValue,
                 },
               });
@@ -331,626 +510,134 @@ export class SettingsManager {
             b.setIcon('lucide-rotate-ccw')
               .setTooltip(t('Reset to default'))
               .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'hide-card-count',
-                  local
-                );
+                const [, globalValue] = this.getSetting('move-tags', local);
                 toggleComponent.setValue(!!globalValue);
 
                 this.applySettingsUpdate({
-                  $unset: ['hide-card-count'],
+                  $unset: ['move-tags'],
                 });
               });
           });
       });
 
     new Setting(contentEl)
-      .setName(t('List width'))
-      .setDesc(t('Enter a number to set the list width in pixels.'))
-      .addText((text) => {
-        const [value, globalValue] = this.getSetting('lane-width', local);
-
-        text.inputEl.setAttr('type', 'number');
-        text.inputEl.placeholder = `${
-          globalValue ? globalValue : '272'
-        } (default)`;
-        text.inputEl.value = value ? value.toString() : '';
-
-        text.onChange((val) => {
-          if (val && numberRegEx.test(val)) {
-            text.inputEl.removeClass('error');
-
-            this.applySettingsUpdate({
-              'lane-width': {
-                $set: parseInt(val),
-              },
-            });
-
-            return;
-          }
-
-          if (val) {
-            text.inputEl.addClass('error');
-          }
-
-          this.applySettingsUpdate({
-            $unset: ['lane-width'],
-          });
-        });
-      });
-
-    new Setting(contentEl)
-      .setName(t('Maximum number of archived cards'))
+      .setName(t('Tag click action'))
       .setDesc(
         t(
-          "Archived cards can be viewed in markdown mode. This setting will begin removing old cards once the limit is reached. Setting this value to -1 will allow a board's archive to grow infinitely."
+          'This setting controls whether clicking the tags displayed below the card title opens the Obsidian search or the Kanban board search.'
         )
       )
-      .addText((text) => {
-        const [value, globalValue] = this.getSetting('max-archive-size', local);
+      .addDropdown((dropdown) => {
+        dropdown.addOption('kanban', t('Search Kanban Board'));
+        dropdown.addOption('obsidian', t('Search Obsidian Vault'));
 
-        text.inputEl.setAttr('type', 'number');
-        text.inputEl.placeholder = `${
-          globalValue ? globalValue : '-1'
-        } (default)`;
-        text.inputEl.value = value ? value.toString() : '';
+        const [value, globalValue] = this.getSetting('tag-action', local);
 
-        text.onChange((val) => {
-          if (val && numberRegEx.test(val)) {
-            text.inputEl.removeClass('error');
-
-            this.applySettingsUpdate({
-              'max-archive-size': {
-                $set: parseInt(val),
-              },
-            });
-
-            return;
-          }
-
-          if (val) {
-            text.inputEl.addClass('error');
-          }
-
+        dropdown.setValue((value as string) || (globalValue as string) || 'obsidian');
+        dropdown.onChange((value) => {
           this.applySettingsUpdate({
-            $unset: ['max-archive-size'],
-          });
-        });
-      });
-
-    new Setting(contentEl)
-      .setName(t('Display card checkbox'))
-      .setDesc(t('When toggled, a checkbox will be displayed with each card'))
-      .then((setting) => {
-        let toggleComponent: ToggleComponent;
-
-        setting
-          .addToggle((toggle) => {
-            toggleComponent = toggle;
-
-            const [value, globalValue] = this.getSetting(
-              'show-checkboxes',
-              local
-            );
-
-            if (value !== undefined) {
-              toggle.setValue(value as boolean);
-            } else if (globalValue !== undefined) {
-              toggle.setValue(globalValue as boolean);
-            }
-
-            toggle.onChange((newValue) => {
-              this.applySettingsUpdate({
-                'show-checkboxes': {
-                  $set: newValue,
-                },
-              });
-            });
-          })
-          .addExtraButton((b) => {
-            b.setIcon('lucide-rotate-ccw')
-              .setTooltip(t('Reset to default'))
-              .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'show-checkboxes',
-                  local
-                );
-                toggleComponent.setValue(!!globalValue);
-
-                this.applySettingsUpdate({
-                  $unset: ['show-checkboxes'],
-                });
-              });
-          });
-      });
-
-    new Setting(contentEl)
-      .setName(t('Hide tags in card titles'))
-      .setDesc(
-        t(
-          'When toggled, tags will be hidden card titles. This will prevent tags from being included in the title when creating new notes.'
-        )
-      )
-      .then((setting) => {
-        let toggleComponent: ToggleComponent;
-
-        setting
-          .addToggle((toggle) => {
-            toggleComponent = toggle;
-
-            const [value, globalValue] = this.getSetting(
-              'hide-tags-in-title',
-              local
-            );
-
-            if (value !== undefined) {
-              toggle.setValue(value as boolean);
-            } else if (globalValue !== undefined) {
-              toggle.setValue(globalValue as boolean);
-            }
-
-            toggle.onChange((newValue) => {
-              this.applySettingsUpdate({
-                'hide-tags-in-title': {
-                  $set: newValue,
-                },
-              });
-            });
-          })
-          .addExtraButton((b) => {
-            b.setIcon('lucide-rotate-ccw')
-              .setTooltip(t('Reset to default'))
-              .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'hide-tags-in-title',
-                  local
-                );
-                toggleComponent.setValue(!!globalValue);
-
-                this.applySettingsUpdate({
-                  $unset: ['hide-tags-in-title'],
-                });
-              });
-          });
-      });
-
-    new Setting(contentEl)
-      .setName(t('Hide card display tags'))
-      .setDesc(
-        t('When toggled, tags will not be displayed below the card title.')
-      )
-      .then((setting) => {
-        let toggleComponent: ToggleComponent;
-
-        setting
-          .addToggle((toggle) => {
-            toggleComponent = toggle;
-
-            const [value, globalValue] = this.getSetting(
-              'hide-tags-display',
-              local
-            );
-
-            if (value !== undefined) {
-              toggle.setValue(value as boolean);
-            } else if (globalValue !== undefined) {
-              toggle.setValue(globalValue as boolean);
-            }
-
-            toggle.onChange((newValue) => {
-              this.applySettingsUpdate({
-                'hide-tags-display': {
-                  $set: newValue,
-                },
-              });
-            });
-          })
-          .addExtraButton((b) => {
-            b.setIcon('lucide-rotate-ccw')
-              .setTooltip(t('Reset to default'))
-              .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'hide-tags-display',
-                  local
-                );
-                toggleComponent.setValue(!!globalValue);
-
-                this.applySettingsUpdate({
-                  $unset: ['hide-tags-display'],
-                });
-              });
-          });
-      });
-
-    new Setting(contentEl)
-      .setName(t('Display tag colors'))
-      .setDesc(t('Set colors for the tags displayed below the card title.'))
-      .then((setting) => {
-        const [value] = this.getSetting('tag-colors', local);
-
-        const keys: TagColorSetting[] = ((value || []) as TagColorKey[]).map(
-          (k) => {
-            return {
-              ...TagColorSettingTemplate,
-              id: generateInstanceId(),
-              data: k,
-            };
-          }
-        );
-
-        renderTagSettings(setting.settingEl, keys, (keys: TagColorSetting[]) =>
-          this.applySettingsUpdate({
-            'tag-colors': {
-              $set: keys.map((k) => k.data),
+            'tag-action': {
+              $set: value as 'kanban' | 'obsidian',
             },
-          })
-        );
-
-        this.cleanupFns.push(() => {
-          if (setting.settingEl) {
-            cleanUpTagSettings(setting.settingEl);
-          }
+          });
         });
       });
 
-    contentEl.createEl('h4', { text: t('Board Header Buttons') });
+    new Setting(contentEl).then((setting) => {
+      const [value, globalValue] = this.getSetting('tag-sort', local);
 
-    new Setting(contentEl).setName(t('Add a list')).then((setting) => {
-      let toggleComponent: ToggleComponent;
-
-      setting
-        .addToggle((toggle) => {
-          toggleComponent = toggle;
-
-          const [value, globalValue] = this.getSetting('show-add-list', local);
-
-          if (value !== undefined && value !== null) {
-            toggle.setValue(value as boolean);
-          } else if (globalValue !== undefined && globalValue !== null) {
-            toggle.setValue(globalValue as boolean);
-          } else {
-            // default
-            toggle.setValue(true);
-          }
-
-          toggle.onChange((newValue) => {
-            this.applySettingsUpdate({
-              'show-add-list': {
-                $set: newValue,
-              },
-            });
-          });
-        })
-        .addExtraButton((b) => {
-          b.setIcon('lucide-rotate-ccw')
-            .setTooltip(t('Reset to default'))
-            .onClick(() => {
-              const [, globalValue] = this.getSetting('show-add-list', local);
-              toggleComponent.setValue(!!globalValue);
-
-              this.applySettingsUpdate({
-                $unset: ['show-add-list'],
-              });
-            });
-        });
-    });
-    new Setting(contentEl)
-      .setName(t('disable create new file from link'))
-      .then((setting) => {
-        let toggleComponent: ToggleComponent;
-
-        setting
-          .addToggle((toggle) => {
-            toggleComponent = toggle;
-
-            const [value, globalValue] = this.getSetting(
-              'disable-create-new-file-from-link',
-              local
-            );
-
-            if (value !== undefined && value !== null) {
-              toggle.setValue(value as boolean);
-            } else if (globalValue !== undefined && globalValue !== null) {
-              toggle.setValue(globalValue as boolean);
-            } else {
-              // default
-              toggle.setValue(false);
-            }
-
-            toggle.onChange((newValue) => {
-              this.applySettingsUpdate({
-                'disable-create-new-file-from-link': {
-                  $set: newValue,
-                },
-              });
-            });
-          })
-          .addExtraButton((b) => {
-            b.setIcon('lucide-rotate-ccw')
-              .setTooltip(t('Reset to default'))
-              .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'disable-create-new-file-from-link',
-                  local
-                );
-                toggleComponent.setValue(!!globalValue);
-
-                this.applySettingsUpdate({
-                  $unset: ['disable-create-new-file-from-link'],
-                });
-              });
-          });
+      const keys: TagSortSetting[] = ((value || globalValue || []) as TagSort[]).map((k) => {
+        return {
+          ...TagSortSettingTemplate,
+          id: generateInstanceId(),
+          data: k,
+        };
       });
 
-    new Setting(contentEl)
-      .setName(t('show markdown like by alias'))
-      .then((setting) => {
-        let toggleComponent: ToggleComponent;
+      renderTagSortSettings(setting.settingEl, contentEl, keys, (keys: TagSortSetting[]) =>
+        this.applySettingsUpdate({
+          'tag-sort': {
+            $set: keys.map((k) => k.data),
+          },
+        })
+      );
 
-        setting
-          .addToggle((toggle) => {
-            toggleComponent = toggle;
+      this.cleanupFns.push(() => {
+        if (setting.settingEl) {
+          cleanUpTagSortSettings(setting.settingEl);
+        }
+      });
+    });
 
-            const [value, globalValue] = this.getSetting(
-              'show-markdown-like-by-alias',
-              local
-            );
+    new Setting(contentEl).then((setting) => {
+      const [value] = this.getSetting('tag-colors', local);
 
-            if (value !== undefined && value !== null) {
-              toggle.setValue(value as boolean);
-            } else if (globalValue !== undefined && globalValue !== null) {
-              toggle.setValue(globalValue as boolean);
-            } else {
-              // default
-              toggle.setValue(false);
-            }
-
-            toggle.onChange((newValue) => {
-              this.applySettingsUpdate({
-                'show-markdown-like-by-alias': {
-                  $set: newValue,
-                },
-              });
-            });
-          })
-          .addExtraButton((b) => {
-            b.setIcon('lucide-rotate-ccw')
-              .setTooltip(t('Reset to default'))
-              .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'show-markdown-like-by-alias',
-                  local
-                );
-                toggleComponent.setValue(!!globalValue);
-
-                this.applySettingsUpdate({
-                  $unset: ['show-markdown-like-by-alias'],
-                });
-              });
-          });
+      const keys: TagColorSetting[] = ((value || []) as TagColor[]).map((k) => {
+        return {
+          ...TagColorSettingTemplate,
+          id: generateInstanceId(),
+          data: k,
+        };
       });
 
-    new Setting(contentEl).setName(t('Add a unit')).then((setting) => {
-      let toggleComponent: ToggleComponent;
-
-      setting
-        .addToggle((toggle) => {
-          toggleComponent = toggle;
-
-          const [value, globalValue] = this.getSetting('show-add-unit', local);
-
-          if (value !== undefined && value !== null) {
-            toggle.setValue(value as boolean);
-          } else if (globalValue !== undefined && globalValue !== null) {
-            toggle.setValue(globalValue as boolean);
-          } else {
-            // default
-            toggle.setValue(false);
-          }
-
-          toggle.onChange((newValue) => {
-            this.applySettingsUpdate({
-              'show-add-unit': {
-                $set: newValue,
-              },
-            });
-          });
+      renderTagSettings(setting.settingEl, keys, (keys: TagColorSetting[]) =>
+        this.applySettingsUpdate({
+          'tag-colors': {
+            $set: keys.map((k) => k.data),
+          },
         })
-        .addExtraButton((b) => {
-          b.setIcon('lucide-rotate-ccw')
-            .setTooltip(t('Reset to default'))
-            .onClick(() => {
-              const [, globalValue] = this.getSetting('show-add-unit', local);
-              toggleComponent.setValue(!!globalValue);
+      );
 
-              this.applySettingsUpdate({
-                $unset: ['show-add-unit'],
-              });
-            });
-        });
-    });
-
-    new Setting(contentEl)
-      .setName(t('Archive completed cards'))
-      .then((setting) => {
-        let toggleComponent: ToggleComponent;
-
-        setting
-          .addToggle((toggle) => {
-            toggleComponent = toggle;
-
-            const [value, globalValue] = this.getSetting(
-              'show-archive-all',
-              local
-            );
-
-            if (value !== undefined && value !== null) {
-              toggle.setValue(value as boolean);
-            } else if (globalValue !== undefined && globalValue !== null) {
-              toggle.setValue(globalValue as boolean);
-            } else {
-              // default
-              toggle.setValue(true);
-            }
-
-            toggle.onChange((newValue) => {
-              this.applySettingsUpdate({
-                'show-archive-all': {
-                  $set: newValue,
-                },
-              });
-            });
-          })
-          .addExtraButton((b) => {
-            b.setIcon('lucide-rotate-ccw')
-              .setTooltip(t('Reset to default'))
-              .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'show-archive-all',
-                  local
-                );
-                toggleComponent.setValue(!!globalValue);
-
-                this.applySettingsUpdate({
-                  $unset: ['show-archive-all'],
-                });
-              });
-          });
+      this.cleanupFns.push(() => {
+        if (setting.settingEl) {
+          cleanUpTagSettings(setting.settingEl);
+        }
       });
-
-    new Setting(contentEl).setName(t('Open as markdown')).then((setting) => {
-      let toggleComponent: ToggleComponent;
-
-      setting
-        .addToggle((toggle) => {
-          toggleComponent = toggle;
-
-          const [value, globalValue] = this.getSetting(
-            'show-view-as-markdown',
-            local
-          );
-
-          if (value !== undefined && value !== null) {
-            toggle.setValue(value as boolean);
-          } else if (globalValue !== undefined && globalValue !== null) {
-            toggle.setValue(globalValue as boolean);
-          } else {
-            // default
-            toggle.setValue(true);
-          }
-
-          toggle.onChange((newValue) => {
-            this.applySettingsUpdate({
-              'show-view-as-markdown': {
-                $set: newValue,
-              },
-            });
-          });
-        })
-        .addExtraButton((b) => {
-          b.setIcon('lucide-rotate-ccw')
-            .setTooltip(t('Reset to default'))
-            .onClick(() => {
-              const [, globalValue] = this.getSetting(
-                'show-view-as-markdown',
-                local
-              );
-              toggleComponent.setValue(!!globalValue);
-
-              this.applySettingsUpdate({
-                $unset: ['show-view-as-markdown'],
-              });
-            });
-        });
-    });
-
-    new Setting(contentEl).setName(t('Open board settings')).then((setting) => {
-      let toggleComponent: ToggleComponent;
-
-      setting
-        .addToggle((toggle) => {
-          toggleComponent = toggle;
-
-          const [value, globalValue] = this.getSetting(
-            'show-board-settings',
-            local
-          );
-
-          if (value !== undefined && value !== null) {
-            toggle.setValue(value as boolean);
-          } else if (globalValue !== undefined && globalValue !== null) {
-            toggle.setValue(globalValue as boolean);
-          } else {
-            // default
-            toggle.setValue(true);
-          }
-
-          toggle.onChange((newValue) => {
-            this.applySettingsUpdate({
-              'show-board-settings': {
-                $set: newValue,
-              },
-            });
-          });
-        })
-        .addExtraButton((b) => {
-          b.setIcon('lucide-rotate-ccw')
-            .setTooltip(t('Reset to default'))
-            .onClick(() => {
-              const [, globalValue] = this.getSetting(
-                'show-board-settings',
-                local
-              );
-              toggleComponent.setValue(!!globalValue);
-
-              this.applySettingsUpdate({
-                $unset: ['show-board-settings'],
-              });
-            });
-        });
-    });
-
-    new Setting(contentEl).setName(t('Search...')).then((setting) => {
-      let toggleComponent: ToggleComponent;
-
-      setting
-        .addToggle((toggle) => {
-          toggleComponent = toggle;
-
-          const [value, globalValue] = this.getSetting('show-search', local);
-
-          if (value !== undefined && value !== null) {
-            toggle.setValue(value as boolean);
-          } else if (globalValue !== undefined && globalValue !== null) {
-            toggle.setValue(globalValue as boolean);
-          } else {
-            // default
-            toggle.setValue(true);
-          }
-
-          toggle.onChange((newValue) => {
-            this.applySettingsUpdate({
-              'show-search': {
-                $set: newValue,
-              },
-            });
-          });
-        })
-        .addExtraButton((b) => {
-          b.setIcon('lucide-rotate-ccw')
-            .setTooltip(t('Reset to default'))
-            .onClick(() => {
-              const [, globalValue] = this.getSetting('show-search', local);
-              toggleComponent.setValue(!!globalValue);
-
-              this.applySettingsUpdate({
-                $unset: ['show-search'],
-              });
-            });
-        });
     });
 
     contentEl.createEl('h4', { text: t('Date & Time') });
+
+    new Setting(contentEl)
+      .setName(t('Move dates to card footer'))
+      .setDesc(
+        t("When toggled, dates will be displayed in the card's footer instead of the card's body.")
+      )
+      .then((setting) => {
+        let toggleComponent: ToggleComponent;
+
+        setting
+          .addToggle((toggle) => {
+            toggleComponent = toggle;
+
+            const [value, globalValue] = this.getSetting('move-dates', local);
+
+            if (value !== undefined) {
+              toggle.setValue(value as boolean);
+            } else if (globalValue !== undefined) {
+              toggle.setValue(globalValue as boolean);
+            }
+
+            toggle.onChange((newValue) => {
+              this.applySettingsUpdate({
+                'move-dates': {
+                  $set: newValue,
+                },
+              });
+            });
+          })
+          .addExtraButton((b) => {
+            b.setIcon('lucide-rotate-ccw')
+              .setTooltip(t('Reset to default'))
+              .onClick(() => {
+                const [, globalValue] = this.getSetting('move-dates', local);
+                toggleComponent.setValue((globalValue as boolean) ?? true);
+
+                this.applySettingsUpdate({
+                  $unset: ['move-dates'],
+                });
+              });
+          });
+      });
 
     new Setting(contentEl)
       .setName(t('Date trigger'))
@@ -1010,9 +697,7 @@ export class SettingsManager {
       setting.addMomentFormat((mf) => {
         setting.descEl.appendChild(
           createFragment((frag) => {
-            frag.appendText(
-              t('This format will be used when saving dates in markdown.')
-            );
+            frag.appendText(t('This format will be used when saving dates in markdown.'));
             frag.createEl('br');
             frag.appendText(t('For more syntax, refer to') + ' ');
             frag.createEl(
@@ -1110,11 +795,7 @@ export class SettingsManager {
       setting.addMomentFormat((mf) => {
         setting.descEl.appendChild(
           createFragment((frag) => {
-            frag.appendText(
-              t(
-                'This format will be used when displaying dates in Kanban cards.'
-              )
-            );
+            frag.appendText(t('This format will be used when displaying dates in Kanban cards.'));
             frag.createEl('br');
             frag.appendText(t('For more syntax, refer to') + ' ');
             frag.createEl(
@@ -1134,10 +815,7 @@ export class SettingsManager {
           })
         );
 
-        const [value, globalValue] = this.getSetting(
-          'date-display-format',
-          local
-        );
+        const [value, globalValue] = this.getSetting('date-display-format', local);
         const defaultFormat = getDefaultDateFormat(this.app);
 
         mf.setPlaceholder(defaultFormat);
@@ -1167,7 +845,7 @@ export class SettingsManager {
       .setName(t('Show relative date'))
       .setDesc(
         t(
-          "When toggled, cards will display the distance between today and the card's date. eg. 'In 3 days', 'A month ago'"
+          "When toggled, cards will display the distance between today and the card's date. eg. 'In 3 days', 'A month ago'. Relative dates will not be shown for dates from the Tasks and Dataview plugins."
         )
       )
       .then((setting) => {
@@ -1177,10 +855,7 @@ export class SettingsManager {
           .addToggle((toggle) => {
             toggleComponent = toggle;
 
-            const [value, globalValue] = this.getSetting(
-              'show-relative-date',
-              local
-            );
+            const [value, globalValue] = this.getSetting('show-relative-date', local);
 
             if (value !== undefined) {
               toggle.setValue(value as boolean);
@@ -1200,10 +875,7 @@ export class SettingsManager {
             b.setIcon('lucide-rotate-ccw')
               .setTooltip(t('Reset to default'))
               .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'show-relative-date',
-                  local
-                );
+                const [, globalValue] = this.getSetting('show-relative-date', local);
                 toggleComponent.setValue(!!globalValue);
 
                 this.applySettingsUpdate({
@@ -1214,161 +886,8 @@ export class SettingsManager {
       });
 
     new Setting(contentEl)
-      .setName(t('Hide card display dates'))
-      .setDesc(
-        t(
-          'When toggled, formatted dates will not be displayed on the card. Relative dates will still be displayed if they are enabled.'
-        )
-      )
-      .then((setting) => {
-        let toggleComponent: ToggleComponent;
-
-        setting
-          .addToggle((toggle) => {
-            toggleComponent = toggle;
-
-            const [value, globalValue] = this.getSetting(
-              'hide-date-display',
-              local
-            );
-
-            if (value !== undefined) {
-              toggle.setValue(value as boolean);
-            } else if (globalValue !== undefined) {
-              toggle.setValue(globalValue as boolean);
-            }
-
-            toggle.onChange((newValue) => {
-              this.applySettingsUpdate({
-                'hide-date-display': {
-                  $set: newValue,
-                },
-              });
-            });
-          })
-          .addExtraButton((b) => {
-            b.setIcon('lucide-rotate-ccw')
-              .setTooltip(t('Reset to default'))
-              .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'hide-date-display',
-                  local
-                );
-                toggleComponent.setValue(!!globalValue);
-
-                this.applySettingsUpdate({
-                  $unset: ['hide-date-display'],
-                });
-              });
-          });
-      });
-
-    new Setting(contentEl)
-      .setName(t('Hide dates in card titles'))
-      .setDesc(
-        t(
-          'When toggled, dates will be hidden card titles. This will prevent dates from being included in the title when creating new notes.'
-        )
-      )
-      .then((setting) => {
-        let toggleComponent: ToggleComponent;
-
-        setting
-          .addToggle((toggle) => {
-            toggleComponent = toggle;
-
-            const [value, globalValue] = this.getSetting(
-              'hide-date-in-title',
-              local
-            );
-
-            if (value !== undefined) {
-              toggle.setValue(value as boolean);
-            } else if (globalValue !== undefined) {
-              toggle.setValue(globalValue as boolean);
-            }
-
-            toggle.onChange((newValue) => {
-              this.applySettingsUpdate({
-                'hide-date-in-title': {
-                  $set: newValue,
-                },
-              });
-            });
-          })
-          .addExtraButton((b) => {
-            b.setIcon('lucide-rotate-ccw')
-              .setTooltip(t('Reset to default'))
-              .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'hide-date-in-title',
-                  local
-                );
-                toggleComponent.setValue(!!globalValue);
-
-                this.applySettingsUpdate({
-                  $unset: ['hide-date-in-title'],
-                });
-              });
-          });
-      });
-
-    new Setting(contentEl)
-      .setName(t('Display date colors'))
-      .setDesc(
-        t(
-          'Set colors for the date displayed below the card based on the rules below'
-        )
-      )
-      .then((setting) => {
-        const [value] = this.getSetting('date-colors', local);
-
-        const keys: DateColorSetting[] = ((value || []) as DateColorKey[]).map(
-          (k) => {
-            return {
-              ...DateColorSettingTemplate,
-              id: generateInstanceId(),
-              data: k,
-            };
-          }
-        );
-
-        renderDateSettings(
-          setting.settingEl,
-          keys,
-          (keys: DateColorSetting[]) =>
-            this.applySettingsUpdate({
-              'date-colors': {
-                $set: keys.map((k) => k.data),
-              },
-            }),
-          () => {
-            const [value, globalValue] = this.getSetting(
-              'date-display-format',
-              local
-            );
-            const defaultFormat = getDefaultDateFormat(this.app);
-            return value || globalValue || defaultFormat;
-          },
-          () => {
-            const [value, globalValue] = this.getSetting('time-format', local);
-            const defaultFormat = getDefaultTimeFormat(this.app);
-            return value || globalValue || defaultFormat;
-          }
-        );
-
-        this.cleanupFns.push(() => {
-          if (setting.settingEl) {
-            cleanUpDateSettings(setting.settingEl);
-          }
-        });
-      });
-
-    new Setting(contentEl)
       .setName(t('Link dates to daily notes'))
-      .setDesc(
-        t('When toggled, dates will link to daily notes. Eg. [[2021-04-26]]')
-      )
+      .setDesc(t('When toggled, dates will link to daily notes. Eg. [[2021-04-26]]'))
       .then((setting) => {
         let toggleComponent: ToggleComponent;
 
@@ -1376,10 +895,7 @@ export class SettingsManager {
           .addToggle((toggle) => {
             toggleComponent = toggle;
 
-            const [value, globalValue] = this.getSetting(
-              'link-date-to-daily-note',
-              local
-            );
+            const [value, globalValue] = this.getSetting('link-date-to-daily-note', local);
 
             if (value !== undefined) {
               toggle.setValue(value as boolean);
@@ -1399,10 +915,7 @@ export class SettingsManager {
             b.setIcon('lucide-rotate-ccw')
               .setTooltip(t('Reset to default'))
               .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'link-date-to-daily-note',
-                  local
-                );
+                const [, globalValue] = this.getSetting('link-date-to-daily-note', local);
                 toggleComponent.setValue(!!globalValue);
 
                 this.applySettingsUpdate({
@@ -1411,6 +924,45 @@ export class SettingsManager {
               });
           });
       });
+
+    new Setting(contentEl).then((setting) => {
+      const [value] = this.getSetting('date-colors', local);
+
+      const keys: DateColorSetting[] = ((value || []) as DateColor[]).map((k) => {
+        return {
+          ...DateColorSettingTemplate,
+          id: generateInstanceId(),
+          data: k,
+        };
+      });
+
+      renderDateSettings(
+        setting.settingEl,
+        keys,
+        (keys: DateColorSetting[]) =>
+          this.applySettingsUpdate({
+            'date-colors': {
+              $set: keys.map((k) => k.data),
+            },
+          }),
+        () => {
+          const [value, globalValue] = this.getSetting('date-display-format', local);
+          const defaultFormat = getDefaultDateFormat(this.app);
+          return value || globalValue || defaultFormat;
+        },
+        () => {
+          const [value, globalValue] = this.getSetting('time-format', local);
+          const defaultFormat = getDefaultTimeFormat(this.app);
+          return value || globalValue || defaultFormat;
+        }
+      );
+
+      this.cleanupFns.push(() => {
+        if (setting.settingEl) {
+          cleanUpDateSettings(setting.settingEl);
+        }
+      });
+    });
 
     new Setting(contentEl)
       .setName(t('Add date and time to archived cards'))
@@ -1426,10 +978,7 @@ export class SettingsManager {
           .addToggle((toggle) => {
             toggleComponent = toggle;
 
-            const [value, globalValue] = this.getSetting(
-              'archive-with-date',
-              local
-            );
+            const [value, globalValue] = this.getSetting('archive-with-date', local);
 
             if (value !== undefined) {
               toggle.setValue(value as boolean);
@@ -1449,10 +998,7 @@ export class SettingsManager {
             b.setIcon('lucide-rotate-ccw')
               .setTooltip(t('Reset to default'))
               .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'archive-with-date',
-                  local
-                );
+                const [, globalValue] = this.getSetting('archive-with-date', local);
                 toggleComponent.setValue(!!globalValue);
 
                 this.applySettingsUpdate({
@@ -1476,10 +1022,7 @@ export class SettingsManager {
           .addToggle((toggle) => {
             toggleComponent = toggle;
 
-            const [value, globalValue] = this.getSetting(
-              'append-archive-date',
-              local
-            );
+            const [value, globalValue] = this.getSetting('append-archive-date', local);
 
             if (value !== undefined) {
               toggle.setValue(value as boolean);
@@ -1499,10 +1042,7 @@ export class SettingsManager {
             b.setIcon('lucide-rotate-ccw')
               .setTooltip(t('Reset to default'))
               .onClick(() => {
-                const [, globalValue] = this.getSetting(
-                  'append-archive-date',
-                  local
-                );
+                const [, globalValue] = this.getSetting('append-archive-date', local);
                 toggleComponent.setValue(!!globalValue);
 
                 this.applySettingsUpdate({
@@ -1514,18 +1054,11 @@ export class SettingsManager {
 
     new Setting(contentEl)
       .setName(t('Archive date/time separator'))
-      .setDesc(
-        t('This will be used to separate the archived date/time from the title')
-      )
+      .setDesc(t('This will be used to separate the archived date/time from the title'))
       .addText((text) => {
-        const [value, globalValue] = this.getSetting(
-          'archive-date-separator',
-          local
-        );
+        const [value, globalValue] = this.getSetting('archive-date-separator', local);
 
-        text.inputEl.placeholder = globalValue
-          ? `${globalValue} (default)`
-          : '';
+        text.inputEl.placeholder = globalValue ? `${globalValue} (default)` : '';
         text.inputEl.value = value ? (value as string) : '';
 
         text.onChange((val) => {
@@ -1545,72 +1078,59 @@ export class SettingsManager {
         });
       });
 
-    new Setting(contentEl)
-      .setName(t('Archive date/time format'))
-      .then((setting) => {
-        setting.addMomentFormat((mf) => {
-          setting.descEl.appendChild(
-            createFragment((frag) => {
-              frag.appendText(t('For more syntax, refer to') + ' ');
-              frag.createEl(
-                'a',
-                {
-                  text: t('format reference'),
-                  href: 'https://momentjs.com/docs/#/displaying/format/',
-                },
-                (a) => {
-                  a.setAttr('target', '_blank');
-                }
-              );
-              frag.createEl('br');
-              frag.appendText(t('Your current syntax looks like this') + ': ');
-              mf.setSampleEl(frag.createEl('b', { cls: 'u-pop' }));
-              frag.createEl('br');
-            })
-          );
+    new Setting(contentEl).setName(t('Archive date/time format')).then((setting) => {
+      setting.addMomentFormat((mf) => {
+        setting.descEl.appendChild(
+          createFragment((frag) => {
+            frag.appendText(t('For more syntax, refer to') + ' ');
+            frag.createEl(
+              'a',
+              {
+                text: t('format reference'),
+                href: 'https://momentjs.com/docs/#/displaying/format/',
+              },
+              (a) => {
+                a.setAttr('target', '_blank');
+              }
+            );
+            frag.createEl('br');
+            frag.appendText(t('Your current syntax looks like this') + ': ');
+            mf.setSampleEl(frag.createEl('b', { cls: 'u-pop' }));
+            frag.createEl('br');
+          })
+        );
 
-          const [value, globalValue] = this.getSetting(
-            'archive-date-format',
-            local
-          );
+        const [value, globalValue] = this.getSetting('archive-date-format', local);
 
-          const [dateFmt, globalDateFmt] = this.getSetting(
-            'date-format',
-            local
-          );
-          const defaultDateFmt =
-            dateFmt || globalDateFmt || getDefaultDateFormat(this.app);
-          const [timeFmt, globalTimeFmt] = this.getSetting(
-            'time-format',
-            local
-          );
-          const defaultTimeFmt =
-            timeFmt || globalTimeFmt || getDefaultTimeFormat(this.app);
+        const [dateFmt, globalDateFmt] = this.getSetting('date-format', local);
+        const defaultDateFmt = dateFmt || globalDateFmt || getDefaultDateFormat(this.app);
+        const [timeFmt, globalTimeFmt] = this.getSetting('time-format', local);
+        const defaultTimeFmt = timeFmt || globalTimeFmt || getDefaultTimeFormat(this.app);
 
-          const defaultFormat = `${defaultDateFmt} ${defaultTimeFmt}`;
+        const defaultFormat = `${defaultDateFmt} ${defaultTimeFmt}`;
 
-          mf.setPlaceholder(defaultFormat);
-          mf.setDefaultFormat(defaultFormat);
+        mf.setPlaceholder(defaultFormat);
+        mf.setDefaultFormat(defaultFormat);
 
-          if (value || globalValue) {
-            mf.setValue((value || globalValue) as string);
+        if (value || globalValue) {
+          mf.setValue((value || globalValue) as string);
+        }
+
+        mf.onChange((newValue) => {
+          if (newValue) {
+            this.applySettingsUpdate({
+              'archive-date-format': {
+                $set: newValue,
+              },
+            });
+          } else {
+            this.applySettingsUpdate({
+              $unset: ['archive-date-format'],
+            });
           }
-
-          mf.onChange((newValue) => {
-            if (newValue) {
-              this.applySettingsUpdate({
-                'archive-date-format': {
-                  $set: newValue,
-                },
-              });
-            } else {
-              this.applySettingsUpdate({
-                $unset: ['archive-date-format'],
-              });
-            }
-          });
         });
       });
+    });
 
     new Setting(contentEl)
       .setName(t('Calendar: first day of week'))
@@ -1625,10 +1145,7 @@ export class SettingsManager {
         dropdown.addOption('5', t('Friday'));
         dropdown.addOption('6', t('Saturday'));
 
-        const [value, globalValue] = this.getSetting(
-          'date-picker-week-start',
-          local
-        );
+        const [value, globalValue] = this.getSetting('date-picker-week-start', local);
 
         dropdown.setValue(value?.toString() || globalValue?.toString() || '');
         dropdown.onChange((value) => {
@@ -1647,6 +1164,100 @@ export class SettingsManager {
       });
 
     contentEl.createEl('br');
+    contentEl.createEl('h4', { text: t('Inline Metadata') });
+
+    new Setting(contentEl)
+      .setName(t('Inline metadata position'))
+      .setDesc(
+        t('Controls where the inline metadata (from the Dataview plugin) will be displayed.')
+      )
+      .then((s) => {
+        let input: DropdownComponent;
+
+        s.addDropdown((dropdown) => {
+          input = dropdown;
+
+          dropdown.addOption('body', t('Card body'));
+          dropdown.addOption('footer', t('Card footer'));
+          dropdown.addOption('metadata-table', t('Merge with linked page metadata'));
+
+          const [value, globalValue] = this.getSetting('inline-metadata-position', local);
+
+          dropdown.setValue(
+            value?.toString() || globalValue?.toString() || defaultMetadataPosition
+          );
+          dropdown.onChange((value: 'body' | 'footer' | 'metadata-table') => {
+            if (value) {
+              this.applySettingsUpdate({
+                'inline-metadata-position': {
+                  $set: value,
+                },
+              });
+            } else {
+              this.applySettingsUpdate({
+                $unset: ['inline-metadata-position'],
+              });
+            }
+          });
+        }).addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('inline-metadata-position', local);
+              input.setValue((globalValue as string) || defaultMetadataPosition);
+
+              this.applySettingsUpdate({
+                $unset: ['inline-metadata-position'],
+              });
+            });
+        });
+      });
+
+    new Setting(contentEl)
+      .setName(t('Move task data to card footer'))
+      .setDesc(
+        t(
+          "When toggled, task data (from the Tasks plugin) will be displayed in the card's footer instead of the card's body."
+        )
+      )
+      .then((setting) => {
+        let toggleComponent: ToggleComponent;
+
+        setting
+          .addToggle((toggle) => {
+            toggleComponent = toggle;
+
+            const [value, globalValue] = this.getSetting('move-task-metadata', local);
+
+            if (value !== undefined) {
+              toggle.setValue(value as boolean);
+            } else if (globalValue !== undefined) {
+              toggle.setValue(globalValue as boolean);
+            }
+
+            toggle.onChange((newValue) => {
+              this.applySettingsUpdate({
+                'move-task-metadata': {
+                  $set: newValue,
+                },
+              });
+            });
+          })
+          .addExtraButton((b) => {
+            b.setIcon('lucide-rotate-ccw')
+              .setTooltip(t('Reset to default'))
+              .onClick(() => {
+                const [, globalValue] = this.getSetting('move-task-metadata', local);
+                toggleComponent.setValue((globalValue as boolean) ?? true);
+
+                this.applySettingsUpdate({
+                  $unset: ['move-task-metadata'],
+                });
+              });
+          });
+      });
+
+    contentEl.createEl('br');
     contentEl.createEl('h4', { text: t('Linked Page Metadata') });
     contentEl.createEl('p', {
       cls: c('metadata-setting-desc'),
@@ -1660,9 +1271,7 @@ export class SettingsManager {
 
       const [value] = this.getSetting('metadata-keys', local);
 
-      const keys: MetadataSetting[] = (
-        (value as DataKey[]) || ([] as DataKey[])
-      ).map((k) => {
+      const keys: MetadataSetting[] = ((value as DataKey[]) || ([] as DataKey[])).map((k) => {
         return {
           ...MetadataSettingTemplate,
           id: generateInstanceId(),
@@ -1671,16 +1280,12 @@ export class SettingsManager {
         };
       });
 
-      renderMetadataSettings(
-        setting.settingEl,
-        contentEl,
-        keys,
-        (keys: MetadataSetting[]) =>
-          this.applySettingsUpdate({
-            'metadata-keys': {
-              $set: keys.map((k) => k.data),
-            },
-          })
+      renderMetadataSettings(setting.settingEl, contentEl, keys, (keys: MetadataSetting[]) =>
+        this.applySettingsUpdate({
+          'metadata-keys': {
+            $set: keys.map((k) => k.data),
+          },
+        })
       );
 
       this.cleanupFns.push(() => {
@@ -1688,6 +1293,382 @@ export class SettingsManager {
           cleanupMetadataSettings(setting.settingEl);
         }
       });
+    });
+
+    contentEl.createEl('h4', { text: t('Board Header Buttons') });
+
+    new Setting(contentEl).setName(t('Add a list')).then((setting) => {
+      let toggleComponent: ToggleComponent;
+
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
+
+          const [value, globalValue] = this.getSetting('show-add-list', local);
+
+          if (value !== undefined && value !== null) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined && globalValue !== null) {
+            toggle.setValue(globalValue as boolean);
+          } else {
+            // default
+            toggle.setValue(true);
+          }
+
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'show-add-list': {
+                $set: newValue,
+              },
+            });
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('show-add-list', local);
+              toggleComponent.setValue(!!globalValue);
+
+              this.applySettingsUpdate({
+                $unset: ['show-add-list'],
+              });
+            });
+        });
+    });
+      new Setting(contentEl)
+          .setName(t('disable create new file from link'))
+          .then((setting) => {
+              let toggleComponent: ToggleComponent;
+
+              setting
+                  .addToggle((toggle) => {
+                      toggleComponent = toggle;
+
+                      const [value, globalValue] = this.getSetting(
+                          'disable-create-new-file-from-link',
+                          local
+                      );
+
+                      if (value !== undefined && value !== null) {
+                          toggle.setValue(value as boolean);
+                      } else if (globalValue !== undefined && globalValue !== null) {
+                          toggle.setValue(globalValue as boolean);
+                      } else {
+                          // default
+                          toggle.setValue(false);
+                      }
+
+                      toggle.onChange((newValue) => {
+                          this.applySettingsUpdate({
+                              'disable-create-new-file-from-link': {
+                                  $set: newValue,
+                              },
+                          });
+                      });
+                  })
+                  .addExtraButton((b) => {
+                      b.setIcon('lucide-rotate-ccw')
+                          .setTooltip(t('Reset to default'))
+                          .onClick(() => {
+                              const [, globalValue] = this.getSetting(
+                                  'disable-create-new-file-from-link',
+                                  local
+                              );
+                              toggleComponent.setValue(!!globalValue);
+
+                              this.applySettingsUpdate({
+                                  $unset: ['disable-create-new-file-from-link'],
+                              });
+                          });
+                  });
+          });
+
+      new Setting(contentEl)
+          .setName(t('show markdown like by alias'))
+          .then((setting) => {
+              let toggleComponent: ToggleComponent;
+
+              setting
+                  .addToggle((toggle) => {
+                      toggleComponent = toggle;
+
+                      const [value, globalValue] = this.getSetting(
+                          'show-markdown-like-by-alias',
+                          local
+                      );
+
+                      if (value !== undefined && value !== null) {
+                          toggle.setValue(value as boolean);
+                      } else if (globalValue !== undefined && globalValue !== null) {
+                          toggle.setValue(globalValue as boolean);
+                      } else {
+                          // default
+                          toggle.setValue(false);
+                      }
+
+                      toggle.onChange((newValue) => {
+                          this.applySettingsUpdate({
+                              'show-markdown-like-by-alias': {
+                                  $set: newValue,
+                              },
+                          });
+                      });
+                  })
+                  .addExtraButton((b) => {
+                      b.setIcon('lucide-rotate-ccw')
+                          .setTooltip(t('Reset to default'))
+                          .onClick(() => {
+                              const [, globalValue] = this.getSetting(
+                                  'show-markdown-like-by-alias',
+                                  local
+                              );
+                              toggleComponent.setValue(!!globalValue);
+
+                              this.applySettingsUpdate({
+                                  $unset: ['show-markdown-like-by-alias'],
+                              });
+                          });
+                  });
+          });
+
+      new Setting(contentEl).setName(t('Add a unit')).then((setting) => {
+          let toggleComponent: ToggleComponent;
+
+          setting
+              .addToggle((toggle) => {
+                  toggleComponent = toggle;
+
+                  const [value, globalValue] = this.getSetting('show-add-unit', local);
+
+                  if (value !== undefined && value !== null) {
+                      toggle.setValue(value as boolean);
+                  } else if (globalValue !== undefined && globalValue !== null) {
+                      toggle.setValue(globalValue as boolean);
+                  } else {
+                      // default
+                      toggle.setValue(false);
+                  }
+
+                  toggle.onChange((newValue) => {
+                      this.applySettingsUpdate({
+                          'show-add-unit': {
+                              $set: newValue,
+                          },
+                      });
+                  });
+              })
+              .addExtraButton((b) => {
+                  b.setIcon('lucide-rotate-ccw')
+                      .setTooltip(t('Reset to default'))
+                      .onClick(() => {
+                          const [, globalValue] = this.getSetting('show-add-unit', local);
+                          toggleComponent.setValue(!!globalValue);
+
+                          this.applySettingsUpdate({
+                              $unset: ['show-add-unit'],
+                          });
+                      });
+              });
+      });
+    new Setting(contentEl).setName(t('Archive completed cards')).then((setting) => {
+      let toggleComponent: ToggleComponent;
+
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
+
+          const [value, globalValue] = this.getSetting('show-archive-all', local);
+
+          if (value !== undefined && value !== null) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined && globalValue !== null) {
+            toggle.setValue(globalValue as boolean);
+          } else {
+            // default
+            toggle.setValue(true);
+          }
+
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'show-archive-all': {
+                $set: newValue,
+              },
+            });
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('show-archive-all', local);
+              toggleComponent.setValue(!!globalValue);
+
+              this.applySettingsUpdate({
+                $unset: ['show-archive-all'],
+              });
+            });
+        });
+    });
+
+    new Setting(contentEl).setName(t('Open as markdown')).then((setting) => {
+      let toggleComponent: ToggleComponent;
+
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
+
+          const [value, globalValue] = this.getSetting('show-view-as-markdown', local);
+
+          if (value !== undefined && value !== null) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined && globalValue !== null) {
+            toggle.setValue(globalValue as boolean);
+          } else {
+            // default
+            toggle.setValue(true);
+          }
+
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'show-view-as-markdown': {
+                $set: newValue,
+              },
+            });
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('show-view-as-markdown', local);
+              toggleComponent.setValue(!!globalValue);
+
+              this.applySettingsUpdate({
+                $unset: ['show-view-as-markdown'],
+              });
+            });
+        });
+    });
+
+    new Setting(contentEl).setName(t('Open board settings')).then((setting) => {
+      let toggleComponent: ToggleComponent;
+
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
+
+          const [value, globalValue] = this.getSetting('show-board-settings', local);
+
+          if (value !== undefined && value !== null) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined && globalValue !== null) {
+            toggle.setValue(globalValue as boolean);
+          } else {
+            // default
+            toggle.setValue(true);
+          }
+
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'show-board-settings': {
+                $set: newValue,
+              },
+            });
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('show-board-settings', local);
+              toggleComponent.setValue(!!globalValue);
+
+              this.applySettingsUpdate({
+                $unset: ['show-board-settings'],
+              });
+            });
+        });
+    });
+
+    new Setting(contentEl).setName(t('Search...')).then((setting) => {
+      let toggleComponent: ToggleComponent;
+
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
+
+          const [value, globalValue] = this.getSetting('show-search', local);
+
+          if (value !== undefined && value !== null) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined && globalValue !== null) {
+            toggle.setValue(globalValue as boolean);
+          } else {
+            // default
+            toggle.setValue(true);
+          }
+
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'show-search': {
+                $set: newValue,
+              },
+            });
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('show-search', local);
+              toggleComponent.setValue(!!globalValue);
+
+              this.applySettingsUpdate({
+                $unset: ['show-search'],
+              });
+            });
+        });
+    });
+
+    new Setting(contentEl).setName(t('Board view')).then((setting) => {
+      let toggleComponent: ToggleComponent;
+
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
+
+          const [value, globalValue] = this.getSetting('show-set-view', local);
+
+          if (value !== undefined && value !== null) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined && globalValue !== null) {
+            toggle.setValue(globalValue as boolean);
+          } else {
+            // default
+            toggle.setValue(true);
+          }
+
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'show-set-view': {
+                $set: newValue,
+              },
+            });
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('show-set-view', local);
+              toggleComponent.setValue(!!globalValue);
+
+              this.applySettingsUpdate({
+                $unset: ['show-set-view'],
+              });
+            });
+        });
     });
   }
 
@@ -1702,11 +1683,7 @@ export class SettingsModal extends Modal {
   view: KanbanView;
   settingsManager: SettingsManager;
 
-  constructor(
-    view: KanbanView,
-    config: SettingsManagerConfig,
-    settings: KanbanSettings
-  ) {
+  constructor(view: KanbanView, config: SettingsManagerConfig, settings: KanbanSettings) {
     super(view.app);
 
     this.view = view;

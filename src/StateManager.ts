@@ -1,34 +1,31 @@
 import update from 'immutability-helper';
 import { App, TFile, moment } from 'obsidian';
-import Preact from 'preact/compat';
+import { useEffect, useState } from 'preact/compat';
 
-import {
-  getDefaultDateFormat,
-  getDefaultTimeFormat,
-} from './components/helpers';
-import { Board, BoardTemplate, Item } from './components/types';
 import { KanbanView } from './KanbanView';
-import { BaseFormat, shouldRefreshBoard } from './parsers/common';
-import { ListFormat } from './parsers/List';
-import { defaultDateTrigger, defaultTimeTrigger } from './settingHelpers';
 import { KanbanSettings, SettingRetrievers } from './Settings';
+import { getDefaultDateFormat, getDefaultTimeFormat } from './components/helpers';
+import { Board, BoardTemplate, Item } from './components/types';
+import { ListFormat } from './parsers/List';
+import { BaseFormat, frontmatterKey, shouldRefreshBoard } from './parsers/common';
+import { getTaskStatusDone } from './parsers/helpers/inlineMetadata';
+import { defaultDateTrigger, defaultMetadataPosition, defaultTimeTrigger } from './settingHelpers';
 
 export class StateManager {
-  private onEmpty: () => void;
-  private getGlobalSettings: () => KanbanSettings;
+  onEmpty: () => void;
+  getGlobalSettings: () => KanbanSettings;
 
-  private stateReceivers: Array<(state: Board) => void> = [];
-  private settingsNotifiers: Map<keyof KanbanSettings, Array<() => void>> =
-    new Map();
+  stateReceivers: Array<(state: Board) => void> = [];
+  settingsNotifiers: Map<keyof KanbanSettings, Array<() => void>> = new Map();
 
-  private viewSet: Set<KanbanView> = new Set();
-  private compiledSettings: KanbanSettings = {};
+  viewSet: Set<KanbanView> = new Set();
+  compiledSettings: KanbanSettings = {};
 
-  public app: App;
-  public state: Board;
-  public file: TFile;
+  app: App;
+  state: Board;
+  file: TFile;
 
-  private parser: BaseFormat;
+  parser: BaseFormat;
 
   constructor(
     app: App,
@@ -54,29 +51,21 @@ export class StateManager {
     return !!this.state?.data?.errors?.length;
   }
 
-  newBoardPromise: Promise<void> | null = null;
-  registerView(view: KanbanView, data: string, shouldParseData: boolean) {
+  async registerView(view: KanbanView, data: string, shouldParseData: boolean) {
     if (!this.viewSet.has(view)) {
       this.viewSet.add(view);
-      view.initHeaderButtons();
     }
 
+    // This helps delay blocking the UI until the the loading indicator is displayed
+    await new Promise((res) => activeWindow.setTimeout(res, 10));
+
     if (shouldParseData) {
-      if (this.newBoardPromise !== null) {
-        this.newBoardPromise.then(() => {
-          return this.newBoard(data);
-        });
-      } else {
-        this.newBoardPromise = this.newBoard(data)
-          .then(() => {
-            this.newBoardPromise = null;
-          })
-          .catch((e) => {
-            console.error(e);
-            this.setError(e);
-          });
-      }
+      await this.newBoard(view, data);
+    } else {
+      await view.prerender(this.state);
     }
+
+    view.populateViewState(this.state.data.settings);
   }
 
   unregisterView(view: KanbanView) {
@@ -97,9 +86,11 @@ export class StateManager {
     };
   }
 
-  async newBoard(md: string) {
+  async newBoard(view: KanbanView, md: string) {
     try {
-      await this.setState(await this.getParsedBoard(md), false);
+      const board = this.getParsedBoard(md);
+      await view.prerender(board);
+      this.setState(board, false);
     } catch (e) {
       this.setError(e);
     }
@@ -126,11 +117,11 @@ export class StateManager {
     this.stateReceivers.forEach((receiver) => receiver({ ...this.state }));
   }
 
-  async forceRefresh() {
+  forceRefresh() {
     if (this.state) {
       try {
         this.compileSettings();
-        this.state = await this.parser.reparseBoard();
+        this.state = this.parser.reparseBoard();
 
         this.stateReceivers.forEach((receiver) => receiver(this.state));
         this.settingsNotifiers.forEach((notifiers) => {
@@ -144,24 +135,13 @@ export class StateManager {
     }
   }
 
-  async setState(
-    state:
-      | Board
-      | ((board: Board) => Board)
-      | ((board: Board) => Promise<Board>),
-    shouldSave: boolean = true
-  ) {
+  setState(state: Board | ((board: Board) => Board), shouldSave: boolean = true) {
     try {
       const oldSettings = this.state?.data.settings;
-      const newState =
-        typeof state === 'function' ? await state(this.state) : state;
+      const newState = typeof state === 'function' ? state(this.state) : state;
       const newSettings = newState?.data.settings;
 
-      if (
-        oldSettings &&
-        newSettings &&
-        shouldRefreshBoard(oldSettings, newSettings)
-      ) {
+      if (oldSettings && newSettings && shouldRefreshBoard(oldSettings, newSettings)) {
         this.state = update(this.state, {
           data: {
             settings: {
@@ -170,13 +150,16 @@ export class StateManager {
           },
         });
         this.compileSettings();
-        this.state = await this.parser.reparseBoard();
+        this.state = this.parser.reparseBoard();
       } else {
         this.state = newState;
         this.compileSettings();
       }
 
-      this.viewSet.forEach((view) => view.initHeaderButtons());
+      this.viewSet.forEach((view) => {
+        view.initHeaderButtons();
+        view.validatePreviewCache(newState);
+      });
 
       if (shouldSave) {
         this.saveToDisk();
@@ -186,10 +169,7 @@ export class StateManager {
 
       if (oldSettings !== newSettings && newSettings) {
         this.settingsNotifiers.forEach((notifiers, key) => {
-          if (
-            (!oldSettings && newSettings) ||
-            oldSettings[key] !== newSettings[key]
-          ) {
+          if ((!oldSettings && newSettings) || oldSettings[key] !== newSettings[key]) {
             notifiers.forEach((fn) => fn());
           }
         });
@@ -201,15 +181,11 @@ export class StateManager {
   }
 
   useState(): Board {
-    const [state, setState] = Preact.useState(this.state);
+    const [state, setState] = useState(this.state);
 
-    Preact.useEffect(() => {
-      this.stateReceivers.push((state) => {
-        setState(state);
-      });
-
+    useEffect(() => {
+      this.stateReceivers.push((state) => setState(state));
       setState(this.state);
-
       return () => {
         this.stateReceivers.remove(setState);
       };
@@ -219,14 +195,10 @@ export class StateManager {
   }
 
   useSetting<K extends keyof KanbanSettings>(key: K): KanbanSettings[K] {
-    const [state, setState] = Preact.useState<KanbanSettings[K]>(
-      this.getSetting(key)
-    );
+    const [state, setState] = useState<KanbanSettings[K]>(this.getSetting(key));
 
-    Preact.useEffect(() => {
-      const receiver = () => {
-        setState(this.getSetting(key));
-      };
+    useEffect(() => {
+      const receiver = () => setState(this.getSetting(key));
 
       if (this.settingsNotifiers.has(key)) {
         this.settingsNotifiers.get(key).push(receiver);
@@ -244,71 +216,58 @@ export class StateManager {
 
   compileSettings(suppliedSettings?: KanbanSettings) {
     const globalKeys = this.getGlobalSetting('metadata-keys') || [];
-    const localKeys =
-      this.getSettingRaw('metadata-keys', suppliedSettings) || [];
+    const localKeys = this.getSettingRaw('metadata-keys', suppliedSettings) || [];
+    const metadataKeys = Array.from(new Set([...globalKeys, ...localKeys]));
 
     const dateFormat =
-      this.getSettingRaw('date-format', suppliedSettings) ||
-      getDefaultDateFormat(this.app);
+      this.getSettingRaw('date-format', suppliedSettings) || getDefaultDateFormat(this.app);
+    const dateDisplayFormat =
+      this.getSettingRaw('date-display-format', suppliedSettings) || dateFormat;
 
     const timeFormat =
-      this.getSettingRaw('time-format', suppliedSettings) ||
-      getDefaultTimeFormat(this.app);
+      this.getSettingRaw('time-format', suppliedSettings) || getDefaultTimeFormat(this.app);
 
     const archiveDateFormat =
-      this.getSettingRaw('archive-date-format', suppliedSettings) ||
-      `${dateFormat} ${timeFormat}`;
+      this.getSettingRaw('archive-date-format', suppliedSettings) || `${dateFormat} ${timeFormat}`;
 
     this.compiledSettings = {
+      [frontmatterKey]: this.getSettingRaw(frontmatterKey, suppliedSettings) || 'board',
       'date-format': dateFormat,
-      'date-display-format':
-        this.getSettingRaw('date-display-format', suppliedSettings) ||
-        dateFormat,
-      'date-trigger':
-        this.getSettingRaw('date-trigger', suppliedSettings) ||
-        defaultDateTrigger,
+      'date-display-format': dateDisplayFormat,
+      'date-time-display-format': dateDisplayFormat + ' ' + timeFormat,
+      'date-trigger': this.getSettingRaw('date-trigger', suppliedSettings) || defaultDateTrigger,
+      'inline-metadata-position':
+        this.getSettingRaw('inline-metadata-position', suppliedSettings) || defaultMetadataPosition,
       'time-format': timeFormat,
-      'time-trigger':
-        this.getSettingRaw('time-trigger', suppliedSettings) ||
-        defaultTimeTrigger,
-      'link-date-to-daily-note': this.getSettingRaw(
-        'link-date-to-daily-note',
-        suppliedSettings
-      ),
-      'hide-date-in-title': this.getSettingRaw(
-        'hide-date-in-title',
-        suppliedSettings
-      ),
-      'hide-tags-in-title': this.getSettingRaw(
-        'hide-tags-in-title',
-        suppliedSettings
-      ),
-      'metadata-keys': [...globalKeys, ...localKeys],
-      'archive-date-separator':
-        this.getSettingRaw('archive-date-separator') || '',
+      'time-trigger': this.getSettingRaw('time-trigger', suppliedSettings) || defaultTimeTrigger,
+      'link-date-to-daily-note': this.getSettingRaw('link-date-to-daily-note', suppliedSettings),
+      'move-dates': this.getSettingRaw('move-dates', suppliedSettings),
+      'move-tags': this.getSettingRaw('move-tags', suppliedSettings),
+      'move-task-metadata': this.getSettingRaw('move-task-metadata', suppliedSettings),
+      'metadata-keys': metadataKeys,
+      'archive-date-separator': this.getSettingRaw('archive-date-separator') || '',
       'archive-date-format': archiveDateFormat,
-      'show-add-list':
-        this.getSettingRaw('show-add-list', suppliedSettings) ?? true,
-      'show-add-unit':
-        this.getSettingRaw('show-add-unit', suppliedSettings) ?? false,
-      'disable-create-new-file-from-link':
-        this.getSettingRaw(
-          'disable-create-new-file-from-link',
-          suppliedSettings
-        ) ?? false,
-      'show-markdown-like-by-alias':
-        this.getSettingRaw('show-markdown-like-by-alias', suppliedSettings) ??
-        false,
-      'show-archive-all':
-        this.getSettingRaw('show-archive-all', suppliedSettings) ?? true,
+      'show-add-list': this.getSettingRaw('show-add-list', suppliedSettings) ?? true,
+      'show-archive-all': this.getSettingRaw('show-archive-all', suppliedSettings) ?? true,
       'show-view-as-markdown':
         this.getSettingRaw('show-view-as-markdown', suppliedSettings) ?? true,
-      'show-board-settings':
-        this.getSettingRaw('show-board-settings', suppliedSettings) ?? true,
-      'show-search':
-        this.getSettingRaw('show-search', suppliedSettings) ?? true,
+      'show-board-settings': this.getSettingRaw('show-board-settings', suppliedSettings) ?? true,
+      'show-search': this.getSettingRaw('show-search', suppliedSettings) ?? true,
+      'show-set-view': this.getSettingRaw('show-set-view', suppliedSettings) ?? true,
       'tag-colors': this.getSettingRaw('tag-colors', suppliedSettings) ?? [],
+      'tag-sort': this.getSettingRaw('tag-sort', suppliedSettings) ?? [],
       'date-colors': this.getSettingRaw('date-colors', suppliedSettings) ?? [],
+      'tag-action': this.getSettingRaw('tag-action', suppliedSettings) ?? 'obsidian',
+        'show-add-unit':
+            this.getSettingRaw('show-add-unit', suppliedSettings) ?? false,
+        'disable-create-new-file-from-link':
+            this.getSettingRaw(
+                'disable-create-new-file-from-link',
+                suppliedSettings
+            ) ?? false,
+        'show-markdown-like-by-alias':
+            this.getSettingRaw('show-markdown-like-by-alias', suppliedSettings) ??
+            false,
     };
   }
 
@@ -316,11 +275,11 @@ export class StateManager {
     key: K,
     suppliedLocalSettings?: KanbanSettings
   ): KanbanSettings[K] => {
-    if (suppliedLocalSettings && suppliedLocalSettings[key] !== undefined) {
+    if (suppliedLocalSettings?.[key] !== undefined) {
       return suppliedLocalSettings[key];
     }
 
-    if (this.compiledSettings && this.compiledSettings[key] !== undefined) {
+    if (this.compiledSettings?.[key] !== undefined) {
       return this.compiledSettings[key];
     }
 
@@ -331,32 +290,28 @@ export class StateManager {
     key: K,
     suppliedLocalSettings?: KanbanSettings
   ): KanbanSettings[K] => {
-    if (suppliedLocalSettings && suppliedLocalSettings[key] !== undefined) {
+    if (suppliedLocalSettings?.[key] !== undefined) {
       return suppliedLocalSettings[key];
     }
 
-    if (
-      this.state?.data?.settings &&
-      this.state.data.settings[key] !== undefined
-    ) {
+    if (this.state?.data?.settings?.[key] !== undefined) {
       return this.state.data.settings[key];
     }
 
     return this.getGlobalSetting(key);
   };
 
-  getGlobalSetting = <K extends keyof KanbanSettings>(
-    key: K
-  ): KanbanSettings[K] => {
+  getGlobalSetting = <K extends keyof KanbanSettings>(key: K): KanbanSettings[K] => {
     const globalSettings = this.getGlobalSettings();
 
-    if (globalSettings && globalSettings[key] !== undefined)
+    if (globalSettings?.[key] !== undefined) {
       return globalSettings[key];
+    }
 
     return null;
   };
 
-  async getParsedBoard(data: string) {
+  getParsedBoard(data: string) {
     const trimmedContent = data.trim();
 
     let board: Board = {
@@ -365,7 +320,7 @@ export class StateManager {
       children: [],
       data: {
         archive: [],
-        settings: { 'kanban-plugin': 'basic' },
+        settings: { [frontmatterKey]: 'board' },
         frontmatter: {},
         isSearching: false,
         errors: [],
@@ -374,7 +329,7 @@ export class StateManager {
 
     try {
       if (trimmedContent) {
-        board = await this.parser.mdToBoard(trimmedContent);
+        board = this.parser.mdToBoard(trimmedContent);
       }
     } catch (e) {
       console.error(e);
@@ -410,7 +365,7 @@ export class StateManager {
 
   async reparseBoardFromMd() {
     try {
-      this.setState(await this.getParsedBoard(this.getAView().data), false);
+      this.setState(this.getParsedBoard(this.getAView().data), false);
     } catch (e) {
       console.error(e);
       this.setError(e);
@@ -444,21 +399,16 @@ export class StateManager {
       return update(lane, {
         children: {
           $set: lane.children.filter((item) => {
-            if (lane.data.shouldMarkItemsComplete || item.data.isComplete) {
+            const isComplete = item.data.checked && item.data.checkChar === getTaskStatusDone();
+            if (lane.data.shouldMarkItemsComplete || isComplete) {
               archived.push(item);
             }
 
-            return !item.data.isComplete && !lane.data.shouldMarkItemsComplete;
+            return !isComplete && !lane.data.shouldMarkItemsComplete;
           }),
         },
       });
     });
-
-    this.app.workspace.trigger(
-      'kanban:board-cards-archived',
-      this.file,
-      archived
-    );
 
     try {
       this.setState(
@@ -469,9 +419,7 @@ export class StateManager {
           data: {
             archive: {
               $push: shouldAppendArchiveDate
-                ? await Promise.all(
-                    archived.map((item) => appendArchiveDate(item))
-                  )
+                ? await Promise.all(archived.map((item) => appendArchiveDate(item)))
                 : archived,
             },
           },
@@ -482,8 +430,8 @@ export class StateManager {
     }
   }
 
-  getNewItem(content: string, isComplete?: boolean, forceEdit?: boolean) {
-    return this.parser.newItem(content, isComplete, forceEdit);
+  getNewItem(content: string, checkChar: string, forceEdit?: boolean) {
+    return this.parser.newItem(content, checkChar, forceEdit);
   }
 
   updateItemContent(item: Item, content: string) {

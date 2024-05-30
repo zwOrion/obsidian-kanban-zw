@@ -1,12 +1,12 @@
 import update from 'immutability-helper';
-import Preact from 'preact/compat';
-
-import { Path } from 'src/dnd/types';
+import { memo, useCallback, useEffect, useState } from 'preact/compat';
 import { StateManager } from 'src/StateManager';
+import { Path } from 'src/dnd/types';
+import { getTaskStatusDone, toggleTask } from 'src/parsers/helpers/inlineMetadata';
 
 import { BoardModifiers } from '../../helpers/boardModifiers';
-import { c } from '../helpers';
 import { Icon } from '../Icon/Icon';
+import { c } from '../helpers';
 import { Item } from '../types';
 
 interface ItemCheckboxProps {
@@ -17,7 +17,7 @@ interface ItemCheckboxProps {
   boardModifiers: BoardModifiers;
 }
 
-export const ItemCheckbox = Preact.memo(function ItemCheckbox({
+export const ItemCheckbox = memo(function ItemCheckbox({
   shouldMarkItemsComplete,
   path,
   item,
@@ -26,11 +26,38 @@ export const ItemCheckbox = Preact.memo(function ItemCheckbox({
 }: ItemCheckboxProps) {
   const shouldShowCheckbox = stateManager.useSetting('show-checkboxes');
 
-  const [isCtrlHoveringCheckbox, setIsCtrlHoveringCheckbox] =
-    Preact.useState(false);
-  const [isHoveringCheckbox, setIsHoveringCheckbox] = Preact.useState(false);
+  const [isCtrlHoveringCheckbox, setIsCtrlHoveringCheckbox] = useState(false);
+  const [isHoveringCheckbox, setIsHoveringCheckbox] = useState(false);
 
-  Preact.useEffect(() => {
+  const onCheckboxChange = useCallback(() => {
+    const updates = toggleTask(item, stateManager.file);
+    if (updates) {
+      const [itemStrings, checkChars, thisIndex] = updates;
+      const replacements: Item[] = itemStrings.map((str, i) => {
+        const next = stateManager.getNewItem(str, checkChars[i]);
+        if (i === thisIndex) next.id = item.id;
+        return next;
+      });
+
+      boardModifiers.replaceItem(path, replacements);
+    } else {
+      boardModifiers.updateItem(
+        path,
+        update(item, {
+          data: {
+            checkChar: {
+              $apply: (v) => {
+                return v === ' ' ? getTaskStatusDone() : ' ';
+              },
+            },
+            $toggle: ['checked'],
+          },
+        })
+      );
+    }
+  }, [item, stateManager, boardModifiers, ...path]);
+
+  useEffect(() => {
     if (isHoveringCheckbox) {
       const handler = (e: KeyboardEvent) => {
         if (e.metaKey || e.ctrlKey) {
@@ -40,12 +67,12 @@ export const ItemCheckbox = Preact.memo(function ItemCheckbox({
         }
       };
 
-      window.addEventListener('keydown', handler);
-      window.addEventListener('keyup', handler);
+      activeWindow.addEventListener('keydown', handler);
+      activeWindow.addEventListener('keyup', handler);
 
       return () => {
-        window.removeEventListener('keydown', handler);
-        window.removeEventListener('keyup', handler);
+        activeWindow.removeEventListener('keydown', handler);
+        activeWindow.removeEventListener('keyup', handler);
       };
     }
   }, [isHoveringCheckbox]);
@@ -74,23 +101,14 @@ export const ItemCheckbox = Preact.memo(function ItemCheckbox({
     >
       {shouldShowCheckbox && !isCtrlHoveringCheckbox && (
         <input
-          onChange={() => {
-            boardModifiers.updateItem(
-              path,
-              update(item, {
-                data: {
-                  $toggle: ['isComplete'],
-                },
-              })
-            );
-          }}
+          onChange={onCheckboxChange}
           type="checkbox"
           className="task-list-item-checkbox"
-          checked={!!item.data.isComplete}
+          checked={item.data.checked}
+          data-task={item.data.checkChar}
         />
       )}
-      {(isCtrlHoveringCheckbox ||
-        (!shouldShowCheckbox && shouldMarkItemsComplete)) && (
+      {(isCtrlHoveringCheckbox || (!shouldShowCheckbox && shouldMarkItemsComplete)) && (
         <a
           onClick={() => {
             boardModifiers.archiveItem(path);

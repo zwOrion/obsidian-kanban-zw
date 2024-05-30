@@ -1,7 +1,4 @@
-import {
-  Extension as FromMarkdownExtension,
-  Token,
-} from 'mdast-util-from-markdown';
+import { Extension as FromMarkdownExtension, Token } from 'mdast-util-from-markdown';
 import { markdownLineEndingOrSpace } from 'micromark-util-character';
 import { Effects, Extension, State } from 'micromark-util-types';
 
@@ -9,7 +6,7 @@ import { getSelf } from './helpers';
 
 export function tagExtension(): Extension {
   const name = 'hashtag';
-  const startMarker = '#';
+  const hashCharCode = '#'.charCodeAt(0);
 
   function tokenize(effects: Effects, ok: State, nok: State) {
     let data = false;
@@ -20,28 +17,25 @@ export function tagExtension(): Extension {
 
     function start(code: number) {
       if (
-        code !== startMarker.charCodeAt(startMarkerCursor) ||
-        (startMarkerCursor === 0 &&
-          // Tag must come after space or <br>
-          self.previous !== ' '.charCodeAt(0) &&
-          self.previous !== '>'.charCodeAt(0))
+        code !== hashCharCode ||
+        (self.previous !== null && !/\s/.test(String.fromCharCode(self.previous)))
       ) {
         return nok(code);
       }
 
-      effects.enter(name);
-      effects.enter(`${name}Marker`);
+      effects.enter(name as any);
+      effects.enter(`${name}Marker` as any);
 
       return consumeStart(code);
     }
 
     function consumeStart(code: number) {
-      if (startMarkerCursor === startMarker.length) {
-        effects.exit(`${name}Marker`);
+      if (startMarkerCursor === 1) {
+        effects.exit(`${name}Marker` as any);
         return consumeData(code);
       }
 
-      if (code !== startMarker.charCodeAt(startMarkerCursor)) {
+      if (code !== hashCharCode) {
         return nok(code);
       }
 
@@ -52,23 +46,23 @@ export function tagExtension(): Extension {
     }
 
     function consumeData(code: number) {
-      effects.enter(`${name}Data`);
-      effects.enter(`${name}Target`);
+      effects.enter(`${name}Data` as any);
+      effects.enter(`${name}Target` as any);
       return consumeTarget(code);
     }
 
     function consumeTarget(code: number) {
       if (
+        code === null ||
         markdownLineEndingOrSpace(code) ||
-        // Take into account <br>
-        '<'.charCodeAt(0) === code ||
-        '#'.charCodeAt(0) === code ||
-        code === null
+        /[\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~[\]\\\s\n\r]/.test(
+          String.fromCharCode(code)
+        )
       ) {
         if (!data) return nok(code);
-        effects.exit(`${name}Target`);
-        effects.exit(`${name}Data`);
-        effects.exit(name);
+        effects.exit(`${name}Target` as any);
+        effects.exit(`${name}Data` as any);
+        effects.exit(name as any);
 
         return ok(code);
       }
@@ -83,7 +77,7 @@ export function tagExtension(): Extension {
   const call = { tokenize: tokenize };
 
   return {
-    text: { [startMarker.charCodeAt(0)]: call },
+    text: { [hashCharCode]: call },
   };
 }
 
