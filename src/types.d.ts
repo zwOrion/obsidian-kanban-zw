@@ -250,3 +250,7 @@ interface AriaAttributes {
   /** Defines the human readable text alternative of aria-valuenow for a range widget. */
   'aria-valuetext'?: string | undefined;
 }
+
+declare module 'workspace' {
+  function unregisterHoverLinkSource(frontMatterKey:string): void;
+}
