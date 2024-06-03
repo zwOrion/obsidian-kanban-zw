@@ -60,8 +60,7 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
   const [isLaneFormVisible, setIsLaneFormVisible] = useState<boolean>(
     boardData?.children.length === 0
   );
-  const [isUnitFormVisible, setIsUnitFormVisible] = Preact.useState<boolean>(false);
-  let nextNum = 0;
+  const [isUnitFormVisible, setIsUnitFormVisible] = useState<boolean>(false);
   const filePath = stateManager.file.path;
   const maxArchiveLength = stateManager.useSetting('max-archive-size');
   const dateColors = stateManager.useSetting('date-colors');
@@ -74,7 +73,7 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
     }
   }, [boardData?.children.length]);
 
-  const closeUnitForm = Preact.useCallback(() => {
+  const closeUnitForm = useCallback(() => {
     if (boardData?.children.length > 0) {
       setIsUnitFormVisible(false);
     }
@@ -86,12 +85,11 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
     }
   }, [boardData?.children.length, stateManager]);
 
-  Preact.useEffect(() => {
+  useEffect(() => {
     if (boardData?.children.length === 0 && !stateManager.hasError()) {
       setIsUnitFormVisible(false);
     }
   }, [boardData?.children.length, stateManager]);
-  Preact.useEffect(() => {}, [nextNum, stateManager]);
 
   const onNewLane = useCallback(() => {
     rootRef.current?.win.setTimeout(() => {
@@ -109,7 +107,7 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
       }
     });
   }, []);
-  const onNewUnit = Preact.useCallback(() => {
+  const onNewUnit = useCallback(() => {
     rootRef.current?.win.setTimeout(() => {
       const board = rootRef.current?.getElementsByClassName(c('board'));
       if (board?.length) {
@@ -143,26 +141,15 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
     const showUnitForm = () => {
       setIsUnitFormVisible(true);
     };
-    const jumpFindNext = () => {
-      const findAll = rootRef.current.findAll('.is-search-hit');
-      if (findAll) {
-        if (nextNum > findAll.length - 1) {
-          nextNum = 0;
-        }
-        findAll[nextNum].scrollIntoView({ behavior: 'smooth' });
-        nextNum++;
-      }
-    };
+
     view.emitter.on('hotkey', onSearchHotkey);
     view.emitter.on('showLaneForm', showLaneForm);
     view.emitter.on('showUnitForm', showUnitForm);
-    view.emitter.on('jumpFindNext', jumpFindNext);
 
     return () => {
       view.emitter.off('hotkey', onSearchHotkey);
       view.emitter.off('showLaneForm', showLaneForm);
       view.emitter.off('showUnitForm', showUnitForm);
-      view.emitter.off('jumpFindNext', jumpFindNext);
     };
   }, [view]);
 
@@ -281,7 +268,6 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery((e.target as HTMLInputElement).value);
-                    nextNum = 0;
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') {

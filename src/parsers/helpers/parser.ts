@@ -1,4 +1,5 @@
 import { Stat } from 'obsidian';
+import * as Pinyin from 'jian-pinyin'
 
 export interface FileAccessor {
   isEmbed: boolean;
@@ -41,6 +42,25 @@ export function dedentNewLines(str: string) {
 
 export function parseLaneTitle(str: string) {
   str = replaceBrs(str);
+
+  const match = str.match(/^(.*?)\s*\((\d+)\)$/);
+  if (match == null) return { title: str, maxItems: 0 };
+
+  return { title: match[1], maxItems: Number(match[2]) };
+}
+
+export function parseUnitTitle(str: string) {
+  // const title = await stateManager.getNewItem(laneTitle);
+  // 获取第一个字符，判断是否是中文
+  const firstChar = str.slice(0, 1);
+  const firstCharSpell = Pinyin.getSpell(firstChar);
+  let splitElement = firstCharSpell.split(',')[0].slice(0, 1).toUpperCase();
+  // 判断是否是A~Z
+  if (splitElement < 'A' || splitElement > 'Z') {
+    splitElement = '#';
+  }
+debugger
+  str = replaceBrs(splitElement);
 
   const match = str.match(/^(.*?)\s*\((\d+)\)$/);
   if (match == null) return { title: str, maxItems: 0 };

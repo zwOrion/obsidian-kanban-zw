@@ -1,8 +1,8 @@
 import update from 'immutability-helper';
-import { moment } from 'obsidian';
-import { KanbanView } from 'src/KanbanView';
-import { StateManager } from 'src/StateManager';
-import { Path } from 'src/dnd/types';
+import {moment} from 'obsidian';
+import {KanbanView} from 'src/KanbanView';
+import {StateManager} from 'src/StateManager';
+import {Path} from 'src/dnd/types';
 import {
   appendEntities,
   getEntityFromPath,
@@ -14,8 +14,8 @@ import {
   updateParentEntity,
 } from 'src/dnd/util/data';
 
-import { generateInstanceId } from '../components/helpers';
-import { Board, DataTypes, Item, Lane } from '../components/types';
+import {generateInstanceId} from '../components/helpers';
+import {Board, DataTypes, Item, Lane} from '../components/types';
 
 export interface BoardModifiers {
   appendItems: (path: Path, items: Item[]) => void;
@@ -103,12 +103,15 @@ export function getBoardModifiers(view: KanbanView, stateManager: StateManager):
 
         view.setViewState('list-collapse', undefined, op);
         return update<Board>(appendEntities(boardData, [], [lane]), {
-          data: { settings: { 'list-collapse': { $set: op(collapseState) } } },
+          data: {settings: {'list-collapse': {$set: op(collapseState)}}},
         });
       });
     },
     insertUnits: (lane: Lane) => {
-      stateManager.app.workspace.trigger('kanban:lane-added', stateManager.file, lane);
+      const laneItem = lane.children[0];
+      const laneItemTitle = laneItem.data.title;
+      const laneTitle = lane.data.title;
+      console.log(lane)
       const insertStringInOrder = function (newString: string, array: string[]) {
         let index = 0;
         while (index < array.length && newString > array[index]) {
@@ -117,46 +120,63 @@ export function getBoardModifiers(view: KanbanView, stateManager: StateManager):
         return index;
       };
       stateManager.setState((boardData) => {
-        let i,
-          j,
-          z = 0;
+        const collapseState = view.getViewState('list-collapse') || [];
+        const op = (collapseState: boolean[]) => {
+          const newState = [...collapseState];
+          newState.push(false);
+          return newState;
+        };
+
+        view.setViewState('list-collapse', undefined, op);
+        // 查找Lane是否已经创建
+        let i, j, z = 0;
         let findLane;
         const titles: string[] = [];
         for (i = 0; i < boardData.children.length; i++) {
-          if (boardData.children[i].data.title === lane.data.title) {
+          if (boardData.children[i].data.title === laneTitle) {
             findLane = boardData.children[i];
             j = findLane.children.length - 1;
             findLane.children.forEach((item) => titles.push(item.data.title));
             break;
           }
         }
+        // 如果已经创建，则更新Lane中的元素
         if (findLane) {
+          // 判断Lane中是否已经存在该元素
           z = lane.children.findIndex((item) => titles.contains(item.data.title));
-          console.log('findLane', boardData, findLane, i, j, z);
 
+          // 如果存在，则在原来位置上进行更新
           if (z > -1) {
             z = z - 1;
             const path = [i, z];
-            return updateParentEntity(boardData, path, {
+
+            return update<Board>(updateParentEntity(boardData, path, {
               children: {
                 [path[path.length - 1]]: {
                   $set: lane.children[0],
                 },
               },
+            }), {
+              data: {settings: {'list-collapse': {$set: op(collapseState)}}},
             });
-            // return insertEntity(boardData, [i, z ], [...lane.children])
+
           }
-          return appendEntities(boardData, [i, j], [...lane.children]);
+           return update<Board>(appendEntities(boardData, [i, j], [...lane.children]),  {
+             data: {settings: {'list-collapse': {$set: op(collapseState)}}},
+           })
         }
-        // this.insertStringInOrder()
+        // 如果没有创建，则创建
         if (boardData.children.length === 0) {
-          return insertEntity(boardData, [], [lane]);
+          return update<Board>(insertEntity(boardData, [], [lane]),  {
+            data: {settings: {'list-collapse': {$set: op(collapseState)}}},
+          })
         } else {
           const titlesTmp = boardData.children.map((item) => item.data.title);
-          const index = insertStringInOrder(lane.data.title, titlesTmp);
-          return insertEntity(boardData, [index], [lane]);
+          const index = insertStringInOrder(laneTitle, titlesTmp);
+          return update<Board>(insertEntity(boardData, [index], [lane]),  {
+            data: {settings: {'list-collapse': {$set: op(collapseState)}}},
+          });
         }
-        // return insertEntity(boardData, [], [lane]);
       });
     },
     insertLane: (path: Path, lane: Lane) => {
@@ -169,9 +189,9 @@ export function getBoardModifiers(view: KanbanView, stateManager: StateManager):
         };
 
         view.setViewState('list-collapse', undefined, op);
-
+        console.log(lane,path)
         return update<Board>(insertEntity(boardData, path, [lane]), {
-          data: { settings: { 'list-collapse': { $set: op(collapseState) } } },
+          data: {settings: {'list-collapse': {$set: op(collapseState)}}},
         });
       });
     },
@@ -204,7 +224,7 @@ export function getBoardModifiers(view: KanbanView, stateManager: StateManager):
 
           return update<Board>(removeEntity(boardData, path), {
             data: {
-              settings: { 'list-collapse': { $set: op(collapseState) } },
+              settings: {'list-collapse': {$set: op(collapseState)}},
               archive: {
                 $unshift: stateManager.getSetting('archive-with-date')
                   ? items.map(appendArchiveDate)
@@ -262,7 +282,7 @@ export function getBoardModifiers(view: KanbanView, stateManager: StateManager):
           view.setViewState('list-collapse', undefined, op);
 
           return update<Board>(removeEntity(boardData, path), {
-            data: { settings: { 'list-collapse': { $set: op(collapseState) } } },
+            data: {settings: {'list-collapse': {$set: op(collapseState)}}},
           });
         }
 
@@ -321,7 +341,7 @@ export function getBoardModifiers(view: KanbanView, stateManager: StateManager):
           view.setViewState('list-collapse', undefined, op);
 
           return update<Board>(insertEntity(boardData, path, [entityWithNewID]), {
-            data: { settings: { 'list-collapse': { $set: op(collapseState) } } },
+            data: {settings: {'list-collapse': {$set: op(collapseState)}}},
           });
         }
 

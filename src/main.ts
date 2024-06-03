@@ -383,7 +383,7 @@ export default class KanbanPlugin extends Plugin {
           !Platform.isMobile &&
           fileIsFile &&
           leaf &&
-          source === 'sidebar-context-menu' &&
+          source === 'more-options' &&
           hasFrontmatterKey(file)
         ) {
           const views = this.getKanbanViews(getParentWindow(leaf.view.containerEl));
@@ -719,21 +719,6 @@ export default class KanbanPlugin extends Plugin {
 
         if (view && view instanceof KanbanView) {
           view.emitter.emit('showUnitForm', undefined);
-        }
-      },
-    });
-    this.addCommand({
-      id: 'find-next',
-      name: t('Find Next'),
-      checkCallback: (checking) => {
-        const view = this.app.workspace.getActiveViewOfType(KanbanView);
-
-        if (checking) {
-          return view && view instanceof KanbanView;
-        }
-
-        if (view && view instanceof KanbanView) {
-          view.emitter.emit('jumpFindNext', undefined);
         }
       },
     });

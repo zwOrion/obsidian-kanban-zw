@@ -130,7 +130,10 @@ export const LaneTemplate = {
   accepts: [DataTypes.Lane],
   type: DataTypes.Lane,
 };
-
+export const UnitTemplate = {
+  accepts: [DataTypes.Lane],
+  type: DataTypes.Lane,
+};
 export const BoardTemplate = {
   accepts: [] as string[],
   type: DataTypes.Board,
