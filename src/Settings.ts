@@ -90,9 +90,9 @@ export interface KanbanSettings {
   'tag-sort'?: TagSort[];
   'time-format'?: string;
   'time-trigger'?: string;
-    'show-add-unit'?: boolean;
-    'disable-create-new-file-from-link'?: boolean;
-    'show-markdown-like-by-alias'?: boolean;
+  'show-add-unit'?: boolean;
+  'disable-create-new-file-from-link'?: boolean;
+  'show-markdown-like-by-alias'?: boolean;
 }
 
 export interface KanbanViewSettings {
@@ -141,9 +141,9 @@ export const settingKeyLookup: Set<keyof KanbanSettings> = new Set([
   'tag-sort',
   'time-format',
   'time-trigger',
-    'show-add-unit',
-    'disable-create-new-file-from-link',
-    'show-markdown-like-by-alias'
+  'show-add-unit',
+  'disable-create-new-file-from-link',
+  'show-markdown-like-by-alias',
 ]);
 
 export type SettingRetriever = <K extends keyof KanbanSettings>(
@@ -1336,141 +1336,125 @@ export class SettingsManager {
             });
         });
     });
-      new Setting(contentEl)
-          .setName(t('disable create new file from link'))
-          .then((setting) => {
-              let toggleComponent: ToggleComponent;
+    new Setting(contentEl).setName(t('disable create new file from link')).then((setting) => {
+      let toggleComponent: ToggleComponent;
 
-              setting
-                  .addToggle((toggle) => {
-                      toggleComponent = toggle;
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
 
-                      const [value, globalValue] = this.getSetting(
-                          'disable-create-new-file-from-link',
-                          local
-                      );
+          const [value, globalValue] = this.getSetting('disable-create-new-file-from-link', local);
 
-                      if (value !== undefined && value !== null) {
-                          toggle.setValue(value as boolean);
-                      } else if (globalValue !== undefined && globalValue !== null) {
-                          toggle.setValue(globalValue as boolean);
-                      } else {
-                          // default
-                          toggle.setValue(false);
-                      }
+          if (value !== undefined && value !== null) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined && globalValue !== null) {
+            toggle.setValue(globalValue as boolean);
+          } else {
+            // default
+            toggle.setValue(false);
+          }
 
-                      toggle.onChange((newValue) => {
-                          this.applySettingsUpdate({
-                              'disable-create-new-file-from-link': {
-                                  $set: newValue,
-                              },
-                          });
-                      });
-                  })
-                  .addExtraButton((b) => {
-                      b.setIcon('lucide-rotate-ccw')
-                          .setTooltip(t('Reset to default'))
-                          .onClick(() => {
-                              const [, globalValue] = this.getSetting(
-                                  'disable-create-new-file-from-link',
-                                  local
-                              );
-                              toggleComponent.setValue(!!globalValue);
-
-                              this.applySettingsUpdate({
-                                  $unset: ['disable-create-new-file-from-link'],
-                              });
-                          });
-                  });
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'disable-create-new-file-from-link': {
+                $set: newValue,
+              },
+            });
           });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('disable-create-new-file-from-link', local);
+              toggleComponent.setValue(!!globalValue);
 
-      new Setting(contentEl)
-          .setName(t('show markdown like by alias'))
-          .then((setting) => {
-              let toggleComponent: ToggleComponent;
-
-              setting
-                  .addToggle((toggle) => {
-                      toggleComponent = toggle;
-
-                      const [value, globalValue] = this.getSetting(
-                          'show-markdown-like-by-alias',
-                          local
-                      );
-
-                      if (value !== undefined && value !== null) {
-                          toggle.setValue(value as boolean);
-                      } else if (globalValue !== undefined && globalValue !== null) {
-                          toggle.setValue(globalValue as boolean);
-                      } else {
-                          // default
-                          toggle.setValue(false);
-                      }
-
-                      toggle.onChange((newValue) => {
-                          this.applySettingsUpdate({
-                              'show-markdown-like-by-alias': {
-                                  $set: newValue,
-                              },
-                          });
-                      });
-                  })
-                  .addExtraButton((b) => {
-                      b.setIcon('lucide-rotate-ccw')
-                          .setTooltip(t('Reset to default'))
-                          .onClick(() => {
-                              const [, globalValue] = this.getSetting(
-                                  'show-markdown-like-by-alias',
-                                  local
-                              );
-                              toggleComponent.setValue(!!globalValue);
-
-                              this.applySettingsUpdate({
-                                  $unset: ['show-markdown-like-by-alias'],
-                              });
-                          });
-                  });
-          });
-
-      new Setting(contentEl).setName(t('Add a unit')).then((setting) => {
-          let toggleComponent: ToggleComponent;
-
-          setting
-              .addToggle((toggle) => {
-                  toggleComponent = toggle;
-
-                  const [value, globalValue] = this.getSetting('show-add-unit', local);
-
-                  if (value !== undefined && value !== null) {
-                      toggle.setValue(value as boolean);
-                  } else if (globalValue !== undefined && globalValue !== null) {
-                      toggle.setValue(globalValue as boolean);
-                  } else {
-                      // default
-                      toggle.setValue(false);
-                  }
-
-                  toggle.onChange((newValue) => {
-                      this.applySettingsUpdate({
-                          'show-add-unit': {
-                              $set: newValue,
-                          },
-                      });
-                  });
-              })
-              .addExtraButton((b) => {
-                  b.setIcon('lucide-rotate-ccw')
-                      .setTooltip(t('Reset to default'))
-                      .onClick(() => {
-                          const [, globalValue] = this.getSetting('show-add-unit', local);
-                          toggleComponent.setValue(!!globalValue);
-
-                          this.applySettingsUpdate({
-                              $unset: ['show-add-unit'],
-                          });
-                      });
+              this.applySettingsUpdate({
+                $unset: ['disable-create-new-file-from-link'],
               });
-      });
+            });
+        });
+    });
+
+    new Setting(contentEl).setName(t('show markdown like by alias')).then((setting) => {
+      let toggleComponent: ToggleComponent;
+
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
+
+          const [value, globalValue] = this.getSetting('show-markdown-like-by-alias', local);
+
+          if (value !== undefined && value !== null) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined && globalValue !== null) {
+            toggle.setValue(globalValue as boolean);
+          } else {
+            // default
+            toggle.setValue(false);
+          }
+
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'show-markdown-like-by-alias': {
+                $set: newValue,
+              },
+            });
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('show-markdown-like-by-alias', local);
+              toggleComponent.setValue(!!globalValue);
+
+              this.applySettingsUpdate({
+                $unset: ['show-markdown-like-by-alias'],
+              });
+            });
+        });
+    });
+
+    new Setting(contentEl).setName(t('Add a unit')).then((setting) => {
+      let toggleComponent: ToggleComponent;
+
+      setting
+        .addToggle((toggle) => {
+          toggleComponent = toggle;
+
+          const [value, globalValue] = this.getSetting('show-add-unit', local);
+
+          if (value !== undefined && value !== null) {
+            toggle.setValue(value as boolean);
+          } else if (globalValue !== undefined && globalValue !== null) {
+            toggle.setValue(globalValue as boolean);
+          } else {
+            // default
+            toggle.setValue(false);
+          }
+
+          toggle.onChange((newValue) => {
+            this.applySettingsUpdate({
+              'show-add-unit': {
+                $set: newValue,
+              },
+            });
+          });
+        })
+        .addExtraButton((b) => {
+          b.setIcon('lucide-rotate-ccw')
+            .setTooltip(t('Reset to default'))
+            .onClick(() => {
+              const [, globalValue] = this.getSetting('show-add-unit', local);
+              toggleComponent.setValue(!!globalValue);
+
+              this.applySettingsUpdate({
+                $unset: ['show-add-unit'],
+              });
+            });
+        });
+    });
     new Setting(contentEl).setName(t('Archive completed cards')).then((setting) => {
       let toggleComponent: ToggleComponent;
 

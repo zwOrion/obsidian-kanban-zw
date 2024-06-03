@@ -237,5 +237,5 @@ interface AriaAttributes {
 }
 
 declare module 'workspace' {
-  function unregisterHoverLinkSource(frontMatterKey:string): void;
+  function unregisterHoverLinkSource(frontMatterKey: string): void;
 }

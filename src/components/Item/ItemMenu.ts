@@ -1,4 +1,4 @@
-import { Menu, Platform, TFile, TFolder, getLinkpath, Notice } from 'obsidian';
+import { Menu, Notice, Platform, TFile, TFolder, getLinkpath } from 'obsidian';
 import { Dispatch, StateUpdater, useCallback } from 'preact/hooks';
 import { StateManager } from 'src/StateManager';
 import { Path } from 'src/dnd/types';
@@ -63,15 +63,13 @@ export function useItemMenu({
                 .replace(illegalCharsRegEx, ' ')
                 .trim()
                 .replace(condenceWhiteSpaceRE, ' ');
-                if (
-                    stateManager.getSetting('disable-create-new-file-from-link')
-                ) {
-                    const doubleLinkRegex = /\[\[(.*?)]]/g;
-                    if (doubleLinkRegex.test(item.data.title)) {
-                        new Notice(t('disable create new file from link'));
-                        return;
-                    }
+              if (stateManager.getSetting('disable-create-new-file-from-link')) {
+                const doubleLinkRegex = /\[\[(.*?)]]/g;
+                if (doubleLinkRegex.test(item.data.title)) {
+                  new Notice(t('disable create new file from link'));
+                  return;
                 }
+              }
               const newNoteFolder = stateManager.getSetting('new-note-folder');
               const newNoteTemplatePath = stateManager.getSetting('new-note-template');
 
@@ -92,22 +90,23 @@ export function useItemMenu({
 
               await applyTemplate(stateManager, newNoteTemplatePath as string | undefined);
 
-                const newTitleRaw = stateManager.getSetting(
-                  'show-markdown-like-by-alias'
-                )
-                  ? item.data.titleRaw.replace(
-                      prevTitle,
-                      stateManager.app.fileManager.generateMarkdownLink(
-                        newFile,
-                        stateManager.file.path,
-                        undefined,
-                        prevTitle
-                      )
+              const newTitleRaw = stateManager.getSetting('show-markdown-like-by-alias')
+                ? item.data.titleRaw.replace(
+                    prevTitle,
+                    stateManager.app.fileManager.generateMarkdownLink(
+                      newFile,
+                      stateManager.file.path,
+                      undefined,
+                      prevTitle
                     )
-                  : item.data.titleRaw.replace(
-                prevTitle,
-                stateManager.app.fileManager.generateMarkdownLink(newFile, stateManager.file.path)
-              );
+                  )
+                : item.data.titleRaw.replace(
+                    prevTitle,
+                    stateManager.app.fileManager.generateMarkdownLink(
+                      newFile,
+                      stateManager.file.path
+                    )
+                  );
 
               boardModifiers.updateItem(path, stateManager.updateItemContent(item, newTitleRaw));
             });

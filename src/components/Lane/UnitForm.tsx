@@ -1,14 +1,14 @@
+import * as Pinyin from 'jian-pinyin';
 import Preact from 'preact/compat';
 import useOnclickOutside from 'react-cool-onclickoutside';
-import * as Pinyin from 'jian-pinyin';
-
 import { t } from 'src/lang/helpers';
 import { parseLaneTitle } from 'src/parsers/helpers/parser';
 
-import { KanbanContext } from '../context';
 import { MarkdownEditor, allowNewLine } from '../Editor/MarkdownEditor';
+import { KanbanContext } from '../context';
 import { c, generateInstanceId } from '../helpers';
 import { LaneTemplate } from '../types';
+
 export function UnitForm({
   onNewUnit,
   closeUnitForm,
@@ -17,8 +17,7 @@ export function UnitForm({
   closeUnitForm: () => void;
 }) {
   const { boardModifiers, stateManager } = Preact.useContext(KanbanContext);
-  const [shouldMarkAsComplete, setShouldMarkAsComplete] =
-    Preact.useState(false);
+  const [shouldMarkAsComplete, setShouldMarkAsComplete] = Preact.useState(false);
   const [laneTitle, setLaneTitle] = Preact.useState('');
 
   const inputRef = Preact.useRef<HTMLTextAreaElement>();
@@ -87,9 +86,7 @@ export function UnitForm({
         <MarkdownEditor
           ref={inputRef}
           className={c('lane-input')}
-          onChange={(e) =>
-            setLaneTitle((e.target as HTMLTextAreaElement).value)
-          }
+          onChange={(e) => setLaneTitle((e.target as HTMLTextAreaElement).value)}
           onEnter={(e) => {
             if (!allowNewLine(e, stateManager)) {
               e.preventDefault();

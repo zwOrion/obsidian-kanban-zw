@@ -60,8 +60,7 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
   const [isLaneFormVisible, setIsLaneFormVisible] = useState<boolean>(
     boardData?.children.length === 0
   );
-  const [isUnitFormVisible, setIsUnitFormVisible] =
-    Preact.useState<boolean>(false);
+  const [isUnitFormVisible, setIsUnitFormVisible] = Preact.useState<boolean>(false);
   let nextNum = 0;
   const filePath = stateManager.file.path;
   const maxArchiveLength = stateManager.useSetting('max-archive-size');
@@ -113,16 +112,16 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
   const onNewUnit = Preact.useCallback(() => {
     rootRef.current?.win.setTimeout(() => {
       const board = rootRef.current?.getElementsByClassName(c('board'));
-        if (board?.length) {
-            animateScrollTo([board[0].scrollWidth, 0], {
-                elementToScroll: board[0],
-                speed: 300,
-                minDuration: 150,
-                easing: (x: number) => {
-                    return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
-                },
-            });
-        }
+      if (board?.length) {
+        animateScrollTo([board[0].scrollWidth, 0], {
+          elementToScroll: board[0],
+          speed: 300,
+          minDuration: 150,
+          easing: (x: number) => {
+            return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
+          },
+        });
+      }
     });
   }, []);
   useEffect(() => {
@@ -271,13 +270,10 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
             ])}
             {...html5DragHandlers}
           >
-            {!isUnitFormVisible &&
-              (isLaneFormVisible || boardData.children.length === 0) && (
-                <LaneForm onNewLane={onNewLane} closeLaneForm={closeLaneForm} />
-              )}
-            {isUnitFormVisible && (
-              <UnitForm onNewUnit={onNewUnit} closeUnitForm={closeUnitForm} />
+            {!isUnitFormVisible && (isLaneFormVisible || boardData.children.length === 0) && (
+              <LaneForm onNewLane={onNewLane} closeLaneForm={closeLaneForm} />
             )}
+            {isUnitFormVisible && <UnitForm onNewUnit={onNewUnit} closeUnitForm={closeUnitForm} />}
             {isSearching && (
               <div className={c('search-wrapper')}>
                 <input

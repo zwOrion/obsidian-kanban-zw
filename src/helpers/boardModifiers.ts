@@ -108,15 +108,8 @@ export function getBoardModifiers(view: KanbanView, stateManager: StateManager):
       });
     },
     insertUnits: (lane: Lane) => {
-      stateManager.app.workspace.trigger(
-        'kanban:lane-added',
-        stateManager.file,
-        lane
-      );
-      const insertStringInOrder = function (
-        newString: string,
-        array: string[]
-      ) {
+      stateManager.app.workspace.trigger('kanban:lane-added', stateManager.file, lane);
+      const insertStringInOrder = function (newString: string, array: string[]) {
         let index = 0;
         while (index < array.length && newString > array[index]) {
           index++;
@@ -138,9 +131,7 @@ export function getBoardModifiers(view: KanbanView, stateManager: StateManager):
           }
         }
         if (findLane) {
-          z = lane.children.findIndex((item) =>
-            titles.contains(item.data.title)
-          );
+          z = lane.children.findIndex((item) => titles.contains(item.data.title));
           console.log('findLane', boardData, findLane, i, j, z);
 
           if (z > -1) {

@@ -258,16 +258,11 @@ export class StateManager {
       'tag-sort': this.getSettingRaw('tag-sort', suppliedSettings) ?? [],
       'date-colors': this.getSettingRaw('date-colors', suppliedSettings) ?? [],
       'tag-action': this.getSettingRaw('tag-action', suppliedSettings) ?? 'obsidian',
-        'show-add-unit':
-            this.getSettingRaw('show-add-unit', suppliedSettings) ?? false,
-        'disable-create-new-file-from-link':
-            this.getSettingRaw(
-                'disable-create-new-file-from-link',
-                suppliedSettings
-            ) ?? false,
-        'show-markdown-like-by-alias':
-            this.getSettingRaw('show-markdown-like-by-alias', suppliedSettings) ??
-            false,
+      'show-add-unit': this.getSettingRaw('show-add-unit', suppliedSettings) ?? false,
+      'disable-create-new-file-from-link':
+        this.getSettingRaw('disable-create-new-file-from-link', suppliedSettings) ?? false,
+      'show-markdown-like-by-alias':
+        this.getSettingRaw('show-markdown-like-by-alias', suppliedSettings) ?? false,
     };
   }
 
