@@ -107,18 +107,12 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
       }
     });
   }, []);
-  const onNewUnit = useCallback(() => {
+  const onNewUnit = useCallback((id:string) => {
     rootRef.current?.win.setTimeout(() => {
-      const board = rootRef.current?.getElementsByClassName(c('board'));
+      const board = rootRef.current?.getElementsByClassName(c(`is-new-unit-${id}`));
+
       if (board?.length) {
-        animateScrollTo([board[0].scrollWidth, 0], {
-          elementToScroll: board[0],
-          speed: 300,
-          minDuration: 150,
-          easing: (x: number) => {
-            return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
-          },
-        });
+        board[0].scrollIntoView({ behavior: 'smooth' });
       }
     });
   }, []);

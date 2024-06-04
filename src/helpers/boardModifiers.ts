@@ -108,8 +108,6 @@ export function getBoardModifiers(view: KanbanView, stateManager: StateManager):
       });
     },
     insertUnits: (lane: Lane) => {
-      const laneItem = lane.children[0];
-      const laneItemTitle = laneItem.data.title;
       const laneTitle = lane.data.title;
       console.log(lane)
       const insertStringInOrder = function (newString: string, array: string[]) {

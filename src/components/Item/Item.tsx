@@ -115,7 +115,7 @@ const ItemInner = memo(function ItemInner({
       className={c('item-content-wrapper')}
       {...ignoreAttr}
     >
-      <div className={c('item-title-wrapper')} {...ignoreAttr}>
+      <div className={c('item-title-wrapper') + " " + c(`is-new-unit-${item.id}`)} {...ignoreAttr}>
         <ItemCheckbox
           boardModifiers={boardModifiers}
           item={item}

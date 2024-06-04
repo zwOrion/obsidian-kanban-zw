@@ -10,7 +10,7 @@ import { c, generateInstanceId } from '../helpers';
 import { UnitTemplate } from '../types';
 
 interface UnitFormProps {
-  onNewUnit: () => void;
+  onNewUnit: (id: string) => void;
   closeUnitForm: () => void;
 }
 
@@ -30,11 +30,12 @@ export function UnitForm({ onNewUnit, closeUnitForm }: UnitFormProps) {
 
   const createUnit = useCallback(
       (cm: EditorView, title: string) => {
-
+        const instanceId = generateInstanceId();
+        const newItem = stateManager.getNewItem(title, ' ', false);
         boardModifiers.insertUnits({
           ...UnitTemplate,
-          id: generateInstanceId(),
-          children: [stateManager.getNewItem(title, ' ', true)],
+          id: instanceId,
+          children: [newItem],
           data: {
             ...parseUnitTitle(title),
             shouldMarkItemsComplete: shouldMarkAsComplete,
@@ -50,7 +51,7 @@ export function UnitForm({ onNewUnit, closeUnitForm }: UnitFormProps) {
         });
 
         setShouldMarkAsComplete(false);
-        onNewUnit();
+        onNewUnit(newItem.id);
       },
       [onNewUnit, setShouldMarkAsComplete, boardModifiers]
   );

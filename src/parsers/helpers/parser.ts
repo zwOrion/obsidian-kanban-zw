@@ -57,9 +57,9 @@ export function parseUnitTitle(str: string) {
   let splitElement = firstCharSpell.split(',')[0].slice(0, 1).toUpperCase();
   // 判断是否是A~Z
   if (splitElement < 'A' || splitElement > 'Z') {
-    splitElement = '#';
+    splitElement = '#1';
   }
-debugger
+
   str = replaceBrs(splitElement);
 
   const match = str.match(/^(.*?)\s*\((\d+)\)$/);
