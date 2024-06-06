@@ -1,5 +1,5 @@
+import * as Pinyin from 'jian-pinyin';
 import { Stat } from 'obsidian';
-import * as Pinyin from 'jian-pinyin'
 
 export interface FileAccessor {
   isEmbed: boolean;

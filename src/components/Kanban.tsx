@@ -107,7 +107,7 @@ export const Kanban = ({ view, stateManager }: KanbanProps) => {
       }
     });
   }, []);
-  const onNewUnit = useCallback((id:string) => {
+  const onNewUnit = useCallback((id: string) => {
     rootRef.current?.win.setTimeout(() => {
       const board = rootRef.current?.getElementsByClassName(c(`is-new-unit-${id}`));
 

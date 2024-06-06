@@ -93,17 +93,17 @@ const lang: Partial<Lang> = {
   'This format will be used when displaying dates in Kanban cards.': '看板卡片会以该格式展示日期。',
   'Show relative date': '展示相对日期',
   "When toggled, cards will display the distance between today and the card's date. eg. 'In 3 days', 'A month ago'. Relative dates will not be shown for dates from the Tasks and Dataview plugins.":
-    "当切换时，卡片将显示今天和卡片日期之间的时间差。如。“3天后”、“一个月前”。Tasks 和 Dataview 插件中的日期将不会显示相对日期。",
+    '当切换时，卡片将显示今天和卡片日期之间的时间差。如。“3天后”、“一个月前”。Tasks 和 Dataview 插件中的日期将不会显示相对日期。',
 
   'Move dates to card footer': '将日期移动到卡片底部',
   "When toggled, dates will be displayed in the card's footer instead of the card's body.":
-    "当切换时，日期会被显示在卡片底部，而不是卡片正文。",
+    '当切换时，日期会被显示在卡片底部，而不是卡片正文。',
   'Move tags to card footer': '将标签移动到卡片底部',
   "When toggled, tags will be displayed in the card's footer instead of the card's body.":
-    "当切换时，标签会被显示在卡片底部，而不是卡片正文。",
+    '当切换时，标签会被显示在卡片底部，而不是卡片正文。',
   'Move task data to card footer': '将任务移动到卡片底部',
   "When toggled, task data (from the Tasks plugin) will be displayed in the card's footer instead of the card's body.":
-    "当切换时，任务数据（来自 Tasks 插件）会被显示在卡片底部，而不是卡片正文。",
+    '当切换时，任务数据（来自 Tasks 插件）会被显示在卡片底部，而不是卡片正文。',
   'Inline metadata position': '内联元数据位置',
   'Controls where the inline metadata (from the Dataview plugin) will be displayed.':
     '控制内联元数据（来自 Dataview 插件）显示的位置。',
@@ -171,8 +171,7 @@ const lang: Partial<Lang> = {
   'Add tag': '添加标签',
   'Field contains markdown': '字段包含 Markdown',
   'Tag sort order': '标签排序顺序',
-  'Set an explicit sort order for the specified tags.':
-    '为指定的标签设置一个明确的排序顺序。',
+  'Set an explicit sort order for the specified tags.': '为指定的标签设置一个明确的排序顺序。',
 
   // TagColorSettings.tsx
   'Add tag color': '添加标签颜色',

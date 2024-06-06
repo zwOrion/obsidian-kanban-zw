@@ -6,7 +6,7 @@
   "scripts": {
     "typecheck": "tsc --noemit",
     "dev": "node esbuild.config.mjs",
-    "build": "node esbuild.config.mjs production",
+    "build": "node esbuild.config.mjs production && npm run zip",
     "lint": "eslint ./src/**/*.{ts,tsx}",
     "lint:fix": "eslint ./src/**/*.{ts,tsx} --fix",
     "prettier": "prettier --write \"./src/**/*.{ts,tsx}\"",

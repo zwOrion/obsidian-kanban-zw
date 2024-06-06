@@ -11,14 +11,24 @@ const distDir = path.join(__dirname, 'dist');
 console.log('读取manifest.json文件...');
 const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
 const zipFileName = `${manifest.id}.zip`;
-const zipFilePath = path.join(distDir, zipFileName);
+const zipFilePath = path.join(__dirname, zipFileName);
 
-// Check if the zip file exists and delete it if it does
-if (fs.existsSync(zipFilePath)) {
-  console.log('删除现有的zip文件...');
-  fs.unlinkSync(zipFilePath);
-}
+
+// Run zip command
 console.log('运行zip命令...');
-execSync(`cd ${distDir} && zip -q ${zipFilePath} main.js styles.css manifest.json`);
+execSync(`zip -q ${zipFilePath} main.js styles.css manifest.json`);
 
+// Create dist directory if it doesn't exist
+if (!fs.existsSync(distDir)) {
+  console.log('创建dist目录...');
+  fs.mkdirSync(distDir);
+}
+console.log('将文件复制到dist目录...');
+// Copy zip file to dist directory
+fs.renameSync(zipFilePath, path.join(distDir, zipFileName));
+fs.copyFileSync('main.js', path.join(distDir, 'main.js'));
+fs.copyFileSync('styles.css', path.join(distDir, 'styles.css'));
+fs.copyFileSync('manifest.json', path.join(distDir, 'manifest.json'));
+
+console.log('构建完成。');
 

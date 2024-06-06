@@ -1288,7 +1288,7 @@ export class SettingsManager {
         })
       );
 
-      this.cleanupFns.push(() => { 
+      this.cleanupFns.push(() => {
         if (setting.settingEl) {
           cleanupMetadataSettings(setting.settingEl);
         }
