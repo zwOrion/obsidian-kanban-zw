@@ -109,7 +109,6 @@ export function getBoardModifiers(view: KanbanView, stateManager: StateManager):
     },
     insertUnits: (lane: Lane) => {
       const laneTitle = lane.data.title;
-      console.log(lane);
       const insertStringInOrder = function (newString: string, array: string[]) {
         let index = 0;
         while (index < array.length && newString > array[index]) {
